@@ -1,0 +1,161 @@
+# ============================================================
+# 产业 / 品牌 配置
+#
+# aliases: 搜索与型号识别用的别名（含子品牌）。写全能显著提高召回。
+# is_ours: true = Acme（我方），不进竞品池，只进"我方产品"对照
+# search_terms: 该产业在各语言下的搜索词（拼进渠道搜索 URL）
+# ============================================================
+
+categories:
+  phone:
+    name_zh: 手机
+    icon: "📱"
+    sort_order: 1
+    search_terms: { es: "celular", pt: "celular" }
+    # 规格匹配时的权重（竞品匹配引擎用）
+    spec_weights: { chipset_tier: 0.30, rom_gb: 0.20, ram_gb: 0.15, screen_size: 0.15, camera_main_mp: 0.10, battery_mah: 0.10 }
+  wearable:
+    name_zh: 穿戴
+    icon: "⌚"
+    sort_order: 2
+    search_terms: { es: "smartwatch", pt: "smartwatch" }
+    spec_weights: { screen_size: 0.30, battery_mah: 0.30, extra: 0.40 }
+  audio:
+    name_zh: 音频
+    icon: "🎧"
+    sort_order: 3
+    search_terms: { es: "audifonos", pt: "fone de ouvido" }
+    spec_weights: { extra: 1.0 }
+  tablet:
+    name_zh: 平板
+    icon: "📟"
+    sort_order: 4
+    search_terms: { es: "tablet", pt: "tablet" }
+    spec_weights: { chipset_tier: 0.25, rom_gb: 0.25, ram_gb: 0.15, screen_size: 0.35 }
+  pc:
+    name_zh: PC
+    icon: "💻"
+    sort_order: 5
+    search_terms: { es: "laptop", pt: "notebook" }
+    spec_weights: { chipset_tier: 0.35, ram_gb: 0.25, rom_gb: 0.20, screen_size: 0.20 }
+
+brands:
+  # ---- 我方 ----
+  - name: Acme
+    is_ours: true
+    aliases: [Acme, ACME, Acme, Astra, Nimbus, SonicBuds, Slate Tab, AceBook, Watch GT, Band]
+    categories: [phone, wearable, audio, tablet, pc]
+
+  # ---- 手机 ----
+  - name: Apple
+    aliases: [Apple, iPhone, iPhone Pro, iPhone Pro Max, iPhone Plus]
+    categories: [phone, wearable, audio, tablet, pc]
+  - name: Samsung
+    aliases: [Samsung, Galaxy, Galaxy S, Galaxy A, Galaxy Z Fold, Galaxy Z Flip, Galaxy Watch, Galaxy Buds, Galaxy Tab, Galaxy Book]
+    categories: [phone, wearable, audio, tablet, pc]
+  - name: Honor
+    aliases: [Honor, HONOR, Honor Magic, Honor X, Honor Pad, Honor Choice, Honor Band]
+    categories: [phone, wearable, audio, tablet]
+  - name: Xiaomi
+    aliases: [Xiaomi, Redmi, POCO, Mi, Xiaomi Pad, Redmi Pad, Xiaomi Watch, Redmi Watch, Xiaomi Buds, Redmi Buds, Smart Band]
+    categories: [phone, wearable, audio, tablet]
+  - name: OPPO
+    # ★ realme 是 OPPO 的子品牌，按用户口径并入 OPPO 统计。
+    #   子品牌信息不会丢 —— 它留在型号名里（"realme GT 7"），
+    #   要单独看 realme 线就按型号名筛，不要按品牌筛。
+    aliases: [OPPO, Reno, Oppo A, Oppo Find, Enco, OPPO Pad,
+              realme, Realme, realme GT, realme C, realme Note, Narzo]
+    categories: [phone, wearable, audio, tablet]
+  - name: vivo
+    # iQOO 是 vivo 的子品牌，同上并入
+    aliases: [vivo, vivo Y, vivo V, vivo X, vivo S, iQOO, iQOO Neo, iQOO Z]
+    categories: [phone, tablet]
+  - name: Motorola
+    aliases: [Motorola, Moto G, Moto E, Moto Edge, Motorola Razr, moto]
+    categories: [phone, wearable]
+
+  # ---- 穿戴 ----
+  - name: Garmin
+    aliases: [Garmin, Forerunner, Fenix, Venu, Instinct, Vivoactive]
+    categories: [wearable]
+  - name: Fitbit
+    aliases: [Fitbit, Fitbit Charge, Fitbit Versa, Fitbit Inspire, Fitbit Sense]
+    categories: [wearable]
+  - name: Amazfit
+    aliases: [Amazfit, Zepp, Amazfit GTR, Amazfit Bip, Amazfit Active]
+    categories: [wearable]
+
+  # ---- 音频 ----
+  - name: JBL
+    aliases: [JBL, JBL Tune, JBL Live, JBL Wave, JBL Flip, JBL Charge, JBL Go]
+    categories: [audio]
+  - name: Sony
+    aliases: [Sony, Sony WH, Sony WF, Sony XM, WH-1000XM, WF-1000XM, Sony ULT]
+    categories: [audio]
+  - name: Sennheiser
+    aliases: [Sennheiser, Sennheiser Momentum, Sennheiser Accentum, Sennheiser HD]
+    categories: [audio]
+  - name: Skullcandy
+    aliases: [Skullcandy, Skullcandy Dime, Skullcandy Hesh, Skullcandy Crusher, Skullcandy Jib]
+    categories: [audio]
+  - name: Soundcore
+    aliases: [Soundcore, Anker Soundcore, Soundcore Liberty, Soundcore Life, Soundcore Space]
+    categories: [audio]
+  - name: Bose
+    aliases: [Bose, Bose QuietComfort, Bose Ultra Open, QC Ultra]
+    categories: [audio]
+  - name: Beats
+    aliases: [Beats, Beats Studio, Beats Fit Pro, Beats Solo, Powerbeats]
+    categories: [audio]
+  - name: Bowers & Wilkins
+    # 宝华韦健。别名里放型号线（Px/Pi）而不是裸的 "B&W" ——
+    # 那两个字母在西语标题里会撞上一堆无关词
+    aliases: [Bowers & Wilkins, Bowers Wilkins, Bowers, "B&W",
+              Px7, Px8, Pi7, Pi8, Zeppelin]
+    categories: [audio]
+  - name: Bang & Olufsen
+    # B&O。同理，主认 Beo* 型号线
+    aliases: [Bang & Olufsen, Bang Olufsen, "B&O", Beoplay, Beosound,
+              Beolab, Beoline, BeoPlay EX]
+    categories: [audio]
+
+  # ---- 平板（巴西本土品牌，在 BR 平板货架上占比很高）----
+  - name: Positivo
+    aliases: [Positivo, Positivo Twist, Positivo Ypy, Positivo Vision]
+    categories: [tablet]
+  - name: Multilaser
+    # ★ 别名不放裸的 "M7"/"M10"：那是 Multilaser 的型号，但这两个串
+    #   在别的品牌标题里也到处都是（内存/尺寸），会大面积误召回
+    aliases: [Multilaser, Multi, Multilaser M, Multilaser Tab]
+    categories: [tablet]
+
+  # ---- 平板 / PC ----
+  - name: Lenovo
+    aliases: [Lenovo, Lenovo Tab, IdeaPad, ThinkPad, Yoga, IdeaTab, Legion, LOQ,
+              ThinkPlus, Lenovo LivePods, Lenovo Thinkplus]
+    categories: [tablet, pc, audio]
+  - name: HP
+    aliases: [HP, Hewlett-Packard, HP Pavilion, HP Envy, HP Victus, HP OmniBook, HP EliteBook, HP ProBook]
+    categories: [pc]
+  - name: ASUS
+    aliases: [ASUS, Asus, Vivobook, Zenbook, ROG, TUF Gaming, ProArt]
+    categories: [pc]
+  - name: Dell
+    aliases: [Dell, Inspiron, XPS, Latitude, Alienware, Vostro]
+    categories: [pc]
+  - name: Acer
+    aliases: [Acer, Aspire, Nitro, Predator, Swift, Chromebook Acer]
+    categories: [pc]
+
+# 芯片档位表：竞品匹配时把芯片映射到 1~10 档再比较
+# （直接比字符串没意义，"Snapdragon 8 Gen 3" 和 "A17 Pro" 是同档）
+chipset_tiers:
+  10: [A18 Pro, A17 Pro, Snapdragon 8 Elite, Snapdragon 8 Gen 3, Dimensity 9300, Kirin 9010, Kirin 9020, M4, M3 Max]
+  9:  [A18, A16, Snapdragon 8 Gen 2, Snapdragon 8s Gen 3, Dimensity 9200, Kirin 9000S, M3, M2 Pro]
+  8:  [A15, Snapdragon 8 Gen 1, Snapdragon 888, Dimensity 8300, Dimensity 8200, Kirin 9000, M2, M1 Pro]
+  7:  [A14, Snapdragon 7+ Gen 3, Snapdragon 870, Dimensity 8100, Dimensity 7300, Kirin 8000, M1, Exynos 2400]
+  6:  [A13, Snapdragon 7 Gen 3, Snapdragon 778G, Dimensity 7050, Dimensity 900, Exynos 1480, Core Ultra 7, Ryzen 7]
+  5:  [Snapdragon 695, Snapdragon 6 Gen 1, Dimensity 6300, Helio G99, Exynos 1330, Core i5, Ryzen 5, Kirin 710]
+  4:  [Snapdragon 685, Snapdragon 680, Helio G88, Helio G85, Unisoc T616, Exynos 850, Core i3]
+  3:  [Snapdragon 4 Gen 2, Helio G36, Helio P35, Unisoc T606, Unisoc T310]
+  2:  [Helio A22, Unisoc SC9863, Snapdragon 439]

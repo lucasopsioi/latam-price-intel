@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>拉美竞品情报中枢</title>
+<script>
+/* 主题要在渲染前套上，否则暗色系统上先闪一屏黑再变白 */
+try { var _t = localStorage.getItem("latam.theme");
+  if (_t === "light" || _t === "dark")
+    document.documentElement.setAttribute("data-theme", _t);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<aside id="sidebar">
+  <div class="brand">
+    <div class="dot">🌎</div>
+    <div>
+      <h1>竞品情报中枢</h1>
+      <small>Latin America · 销售团队</small>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-title">今天 · 什么变了</div>
+    <div class="nav-item active" data-page="overview"><span class="ico">◎</span>总览</div>
+    <div class="nav-item" data-page="watch"><span class="ico">🎯</span>关注与预警<span class="badge" id="nb-alerts">0</span></div>
+    <div class="nav-item" data-page="dash"><span class="ico">📊</span>竞争动态<span class="badge" id="nb-dash">0</span></div>
+    <div class="nav-item" data-page="intel"><span class="ico">📰</span>情报流<span class="badge" id="nb-intel">0</span></div>
+    <div class="nav-item" data-page="launches"><span class="ico">🚀</span>上市看板</div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-title">市场 · 长什么样</div>
+    <div class="nav-item" data-page="pboard"><span class="ico">💹</span>价格看板</div>
+    <div class="nav-item" data-page="curve"><span class="ico">〰️</span>价格曲线</div>
+    <div class="nav-item" data-page="rboard"><span class="ico">📈</span>涨价看板</div>
+    <div class="nav-item" data-page="prices"><span class="ico">💲</span>价格明细<span class="badge" id="nb-prices">0</span></div>
+    <div class="nav-item" data-page="trend"><span class="ico">📉</span>价格趋势</div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-title">我的位置 · 怎么定</div>
+    <div class="nav-item" data-page="matches"><span class="ico">⚖️</span>竞品对照<span class="badge" id="nb-matches">0</span></div>
+    <div class="nav-item" data-page="voc"><span class="ico">💬</span>消费者口碑<span class="badge" id="nb-voc">0</span></div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-title">对外</div>
+    <div class="nav-item" data-page="weekly"><span class="ico">📋</span>竞品周报</div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-title">系统</div>
+    <div class="nav-item" data-page="products"><span class="ico">📦</span>我的产品<span class="badge" id="nb-products">0</span></div>
+    <div class="nav-item" data-page="channels"><span class="ico">🏬</span>渠道健康</div>
+    <div class="nav-item" data-page="live"><span class="ico">📡</span>实时过程</div>
+    <div class="nav-item" data-page="agents"><span class="ico">🤖</span>Agent 编排</div>
+    <div class="nav-item" data-page="runs"><span class="ico">🧾</span>运行记录</div>
+    <div class="nav-item" data-page="settings"><span class="ico">⚙️</span>设置</div>
+  </div>
+
+  <div class="sidebar-foot">
+    <div class="status-pill"><span class="led" id="led-task"></span><span id="txt-task">空闲</span></div>
+    <div class="status-pill"><span class="led" id="led-llm"></span><span id="txt-llm">模型未配置</span></div>
+    <div class="status-pill"><span class="led" id="led-tg"></span><span id="txt-tg">Telegram 未配置</span></div>
+  </div>
+</aside>
+
+<div id="main">
+  <div id="toolbar">
+    <h2 id="page-title">总览</h2>
+    <div class="spacer"></div>
+    <div id="toolbar-actions"></div>
+    <button id="theme-toggle" title="切换白天 / 黑夜 / 跟随系统"
+            style="font-size:14px;min-width:34px">🌗</button>
+  </div>
+
+  <!-- ★ 全局上下文栏：选一次，全站生效。
+       以前每个页面各有一套国家/产业/品牌下拉（全站 9 个国家选择器、
+       8 个产业选择器），同一个「墨西哥·手机·Samsung」要重选五六遍 ——
+       这是"页面之间不连贯"最直接的来源。 -->
+  <div id="ctxbar">
+    <span class="ctx-lab">看哪一块</span>
+    <select id="ctx-country" title="国家"><option value="">全部国家</option></select>
+    <select id="ctx-category" title="产业"><option value="">全部产业</option></select>
+    <select id="ctx-brand" title="品牌"><option value="">全部品牌</option></select>
+    <select id="ctx-days" title="时间窗">
+      <option value="7">近 7 天</option>
+      <option value="30" selected>近 30 天</option>
+      <option value="90">近 90 天</option>
+      <option value="365">全部</option>
+    </select>
+    <button id="ctx-reset" title="清空全局筛选">重置</button>
+    <span class="ctx-hint" id="ctx-hint"></span>
+  </div>
+
+  <div id="content">
+
+    <!-- ══════════ 总览 ══════════ -->
+    <div class="page active" id="page-overview">
+      <div id="ov-alerts"></div>
+      <div class="grid c4" id="ov-stats"></div>
+      <div class="card">
+        <h3>各国覆盖 <span class="sub">近 7 天</span></h3>
+        <div class="table-wrap"><table id="ov-countries"></table></div>
+      </div>
+      <div class="grid c2">
+        <div class="card">
+          <h3>价格审计 <span class="sub">近 7 天挂牌数据的把关结果</span></h3>
+          <div id="ov-audit"></div>
+        </div>
+        <div class="card">
+          <h3>最近一次采集</h3>
+          <div id="ov-lastrun"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ 价格分析 ══════════ -->
+    <!-- ══════════ 竞争动态看板 ══════════ -->
+    <div class="page" id="page-dash">
+      <div class="toolbar-row">
+        <select id="df-grain">
+          <option value="day">按天</option>
+          <option value="week" selected>按周</option>
+          <option value="month">按月</option>
+        </select>
+        <select id="df-country"><option value="">全部国家</option></select>
+        <select id="df-category"><option value="">全部产业</option></select>
+        <select id="df-days">
+          <option value="7">近7天</option><option value="30" selected>近30天</option>
+          <option value="90">近90天</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px">
+          <input type="checkbox" id="df-official" checked> 只看官方渠道变动
+        </label>
+        <button class="primary" onclick="loadDash()">刷新</button>
+        <button onclick="run('pricemove')">重算变动</button>
+        <button onclick="run('strategy')">跑策略分析</button>
+        <button onclick="run('brandintel')">跑品牌动态</button>
+      </div>
+      <div class="note" id="df-note" style="display:none"></div>
+
+      <h3 style="margin:14px 0 8px">各国 × 各产业 当前态势</h3>
+      <div class="card"><div class="table-wrap"><table id="dash-summary"></table></div></div>
+
+      <h3 style="margin:18px 0 8px">竞争动态矩阵（时间 × 国家 × 产业）</h3>
+      <div class="card"><div class="table-wrap"><table id="dash-matrix"></table></div></div>
+
+      <div class="grid c2" style="margin-top:18px">
+        <div>
+          <h3 style="margin:0 0 8px">🎯 策略信号（Agent 解读）</h3>
+          <div class="card" id="dash-signals"></div>
+        </div>
+        <div>
+          <h3 style="margin:0 0 8px">📉 价格变动 TOP</h3>
+          <div class="card"><div class="table-wrap"><table id="dash-movers"></table></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ 竞品周报 ══════════ -->
+    <div class="page" id="page-weekly">
+      <div class="toolbar-row">
+        <select id="wf-report"><option value="">最新一期</option></select>
+        <select id="wf-category" title="选择产业"><option value="">全产业</option></select>
+        <select id="wf-period" title="选择期次"></select>
+        <button class="primary" onclick="genWeekly()">生成本期报告</button>
+        <span class="hint" style="margin-left:6px">导出：</span>
+        <button onclick="exportWeekly('docx')">Word</button>
+        <button onclick="exportWeekly('pptx')">PPT</button>
+        <button onclick="exportWeekly('pdf')">PDF</button>
+        <button onclick="loadWeekly()">刷新</button>
+        <span class="hint">周报由汇总 Agent 从本周全部数据生成，数字均可回溯</span>
+      </div>
+      <div class="card" id="weekly-body" style="padding:20px"></div>
+    </div>
+
+    <div class="page" id="page-prices">
+      <div class="toolbar-row">
+        <!-- ★ 搜索框：之前整个页面没有输入框，想查某个型号完全没有路径 -->
+        <input id="pf-q" type="search" placeholder="搜型号，如 S11 Ultra / iPad Air"
+               style="min-width:230px" onkeydown="if(event.key==='Enter')loadPrices()">
+        <select id="pf-country"><option value="">全部国家</option></select>
+        <select id="pf-category"><option value="">全部产业</option></select>
+        <select id="pf-brand"><option value="">全部品牌</option></select>
+        <select id="pf-seller">
+          <option value="">全部卖家</option>
+          <option value="self_operated">渠道自营</option>
+          <option value="brand_official">品牌官方店</option>
+          <option value="third_party">第三方卖家</option>
+        </select>
+        <!-- 默认「全部」：审计是后置阶段，采集刚完时全是 pending，
+             默认只看 accepted 会让页面全白，看起来像程序没跑 -->
+        <select id="pf-status">
+          <option value="all">全部</option>
+          <option value="accepted">仅审计通过</option>
+          <option value="rejected">仅被剔除</option>
+          <option value="pending">待审计</option>
+        </select>
+        <select id="pf-days">
+          <option value="1">今天</option><option value="7" selected>近7天</option>
+          <option value="30">近30天</option><option value="365">全部</option>
+        </select>
+        <select id="pf-sort">
+          <option value="date">最新优先</option>
+          <option value="price_asc">价格低→高</option>
+          <option value="price_desc">价格高→低</option>
+          <option value="discount">折扣力度</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px">
+          <input type="checkbox" id="pf-device" checked> 只看整机
+        </label>
+        <button class="primary" onclick="loadPrices()">查询</button>
+        <span id="pf-count" class="hint"></span>
+      </div>
+      <div class="note" id="pf-note" style="display:none"></div>
+      <div class="card"><div class="table-wrap"><table id="price-table"></table></div></div>
+    </div>
+
+    <!-- ══════════ 竞品对照 ══════════ -->
+    <div class="page" id="page-matches">
+      <div class="card">
+        <h3>📍 我的价格站位 <span class="sub" id="pos-note"></span></h3>
+        <div class="note" id="pos-sign"></div>
+        <div class="chart chart-tall" id="pos-chart"></div>
+        <div class="table-wrap" style="max-height:340px;overflow:auto">
+          <table id="pos-table"></table>
+        </div>
+      </div>
+
+      <div class="toolbar-row">
+        <select id="mf-product"><option value="">全部产品</option></select>
+        <select id="mf-country"><option value="">全部国家</option></select>
+        <button onclick="loadMatches()">查询</button>
+        <button class="primary" onclick="run('match')">重算竞品匹配</button>
+      </div>
+      <div class="note">
+        判定为竞品需同时满足三条：<b>规格相似度 ≥ 阈值</b>、<b>该国有货且可购买</b>、
+        <b>价格落在 ±价格带内</b>。三条是「与」的关系——规格再像但价差三倍不是竞品，
+        是不同价位段的产品。点开每一行可以看到具体判定依据，也可以人工确认或排除。
+      </div>
+      <div id="match-list"></div>
+    </div>
+
+    <!-- ══════════ 上市看板 ══════════ -->
+
+    <div class="page" id="page-trend">
+      <div class="toolbar-row">
+        <select id="tf-country"><option value="">全部国家</option></select>
+        <select id="tf-category"><option value="">全部产业</option></select>
+        <select id="tf-days">
+          <option value="30">近30天</option><option value="90" selected>近90天</option>
+          <option value="180">近180天</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px">
+          <input type="checkbox" id="tf-official"> 只看官方渠道
+        </label>
+        <button class="primary" onclick="loadTrend()">刷新</button>
+        <span class="hint" id="tf-hint"></span>
+      </div>
+      <div class="grid c2" style="align-items:start">
+        <div>
+          <h3 style="margin:0 0 8px">可追踪的产品</h3>
+          <div class="card"><div class="table-wrap" style="max-height:520px;overflow:auto">
+            <table id="trend-list"></table></div></div>
+        </div>
+        <div>
+          <h3 style="margin:0 0 8px" id="trend-title">选一个产品看价格走势</h3>
+          <div class="card" id="trend-chart" style="padding:14px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="page" id="page-launches">
+      <div class="card">
+        <h3>🌏 全球已发布，拉美尚未全面上市
+          <span class="sub">销售团队 前瞻清单：这些机型上市已进入倒计时</span></h3>
+        <div id="launch-note"></div>
+        <div class="table-wrap"><table id="launch-pending"></table></div>
+      </div>
+      <div class="card">
+        <h3>上市时序 <span class="sub">相对全球首发的滞后天数与国家顺序</span></h3>
+        <div class="table-wrap"><table id="launch-events"></table></div>
+      </div>
+    </div>
+
+    <!-- ══════════ 价格看板 ══════════ -->
+    <div class="page" id="page-pboard">
+      <div class="toolbar-row">
+        <select id="bp-country"></select>
+        <select id="bp-category"><option value="">全部产业</option></select>
+        <button class="primary" onclick="loadPriceBoard()">查询</button>
+      </div>
+      <div class="note">
+        <b>先看分布与位置，再看明细行。</b>价格带用的是 P25 / 中位 / P75 而不是均价 ——
+        一个横跨入门到旗舰的品牌，它的均价落在的那个价位上往往<b>一台机器都没有</b>。<br>
+        三张图都<b>锁单一国家、用本币</b>：六国六币种差三个数量级，放同一根轴上纵轴会塌。
+      </div>
+
+      <div class="card">
+        <h3>💹 价格带卡位 <span class="sub" id="bp-band-note"></span></h3>
+        <div class="chart" id="bp-band"></div>
+        <div id="bp-flagged"></div>
+      </div>
+
+      <div class="card">
+        <h3>🔥 折扣力度 <span class="sub" id="bp-heat-note"></span></h3>
+        <div class="chart chart-sm" id="bp-heat"></div>
+      </div>
+
+      <div class="card">
+        <h3>🏁 我方 vs 友商 <span class="sub" id="bp-own-note"></span></h3>
+        <div class="note" style="font-size:12px">
+          这是<b>唯一能六国同屏</b>的价格视图 —— 因为它是百分比。
+          绝对价六国六币种差三个数量级，放一张图上纵轴会塌。<br>
+          我方价取自<b>Acme官方商城</b>（用户口径：商城价就是官方定价），
+          商城没抓到的退回零售自营价，不依赖手工录入。
+        </div>
+        <div class="chart chart-tall" id="bp-own"></div>
+      </div>
+
+      <div class="card">
+        <h3>⚖️ 自营 vs 第三方 <span class="sub" id="bp-seller-note"></span></h3>
+        <div class="chart" id="bp-seller"></div>
+      </div>
+    </div>
+
+    <!-- ══════════ 涨价看板 ══════════ -->
+    <div class="page" id="page-rboard">
+      <div class="toolbar-row">
+        <select id="br-country"></select>
+        <select id="br-category"><option value="">全部产业</option></select>
+        <select id="br-tier">
+          <option value="">全部可信度</option>
+          <option value="credible">只看可信</option>
+          <option value="suspect">只看存疑</option>
+          <option value="implausible">只看几乎必错</option>
+        </select>
+        <button class="primary" onclick="loadRiseBoard()">查询</button>
+      </div>
+      <div class="note">
+        <b>这个看板的第一件事是自证清白。</b>
+        真实涨价在消费电子里是 2~8% 的事；一批"涨价"如果平均幅度远大于降价幅度，
+        说明里面混了促销回弹或变体串档。所以第一张图先看<b>幅度分布</b>，
+        确认噪声占比之后再看清单。<br>
+        阈值<b>按品类分开给</b>：音频/穿戴单价低，几十块的波动就是百分之几十 ——
+        用一套阈值会把真正该看的整机涨价全挤出榜单。
+      </div>
+
+      <div class="grid c4" id="br-kpi"></div>
+
+      <div class="card">
+        <h3>📊 幅度分档 <span class="sub" id="br-bins-note"></span></h3>
+        <div class="chart chart-sm" id="br-bins"></div>
+      </div>
+
+      <div class="card">
+        <h3>📈 涨价清单 <span class="sub" id="br-list-note"></span></h3>
+        <div class="chart chart-tall" id="br-list"></div>
+      </div>
+
+      <div class="card">
+        <h3>🪫 促销收缩 <span class="badge-lead">先行指标</span>
+          <span class="sub" id="br-promo-note"></span></h3>
+        <div class="chart" id="br-promo"></div>
+      </div>
+    </div>
+
+    <!-- ══════════ 价格曲线 ══════════ -->
+    <div class="page" id="page-curve">
+      <div class="toolbar-row">
+        <select id="tc-kind" onchange="syncKindPicker();redrawCurve()">
+          <option value="product" selected>按产品</option>
+          <option value="category">按产业</option>
+          <option value="brand">按品牌</option>
+        </select>
+        <select id="tc-product" style="min-width:260px;display:none" onchange="redrawCurve()"></select>
+        <select id="tc-category" style="min-width:160px" onchange="redrawCurve()"></select>
+        <select id="tc-brand" style="min-width:180px;display:none" onchange="redrawCurve()"></select>
+        <select id="tc-country" onchange="redrawCurve()"><option value="">全部国家</option></select>
+        <select id="tc-days" onchange="redrawCurve()">
+          <option value="30">近 30 天</option>
+          <option value="90" selected>近 3 个月</option>
+          <option value="180">近 6 个月</option>
+          <option value="365">近 1 年</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px">
+          <input type="checkbox" id="tc-index" onchange="redrawCurve()"> 指数口径
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px">
+          <input type="checkbox" id="tc-bychannel" checked onchange="redrawCurve()"> 按渠道分线
+        </label>
+        <button class="primary" onclick="redrawCurve()">刷新</button>
+        <button onclick="addPick()">加入对比</button>
+      </div>
+
+      <div class="note">
+        <b>两种口径，回答两个不同的问题。</b><br>
+        <b>绝对价位</b>回答「现在什么价位」—— 只在篮子覆盖率够的日子出点，
+        覆盖率低的那天中位数只代表一小撮商品，画出来会骗人。<br>
+        <b>指数</b>回答「涨跌了多少」，用<b>逐日配对</b>算：只比两天都在架的商品，
+        所以商品进出货盘不会造成跳变。跨国对比只能看指数 ——
+        六国六币种差三个数量级，绝对价放一根轴上会把小面值币种压成贴底直线。
+      </div>
+
+      <div id="tc-picks" style="margin:10px 0"></div>
+
+      <div class="card">
+        <h3>〰️ 价格曲线 <span class="sub" id="tc-note"></span></h3>
+        <div class="chart chart-tall" id="curve-chart"></div>
+        <div id="tc-meta"></div>
+        <div id="tc-basket" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <!-- ══════════ 关注与预警 ══════════ -->
+    <div class="page" id="page-watch">
+      <div class="toolbar-row">
+        <button class="primary" onclick="scanAlerts()">扫描预警</button>
+        <button onclick="pushAlerts()">推送到 Telegram</button>
+        <button onclick="loadWatchBoard()">刷新</button>
+        <span class="hint">预警只针对关注清单里的对象</span>
+      </div>
+
+      <div class="note">
+        <b>优先级决定两件事：阈值与推送。</b>
+        P0 重点（涨跌 3% 就报，且推 Telegram）、P1 常规（5%，推）、
+        P2 观察（10%，只在界面上看）。<br>
+        ★ 单个对象每轮最多报 5 条，按幅度取最大的那些 ——
+        <b>报得越多越没人看</b>，被折叠了多少会如实告诉你。<br>
+        ★ 判定为「几乎必错」的变动不报（多半是分期月供或变体串档），
+        「存疑」的会报但标出来。
+      </div>
+
+      <div class="card">
+        <h3>🎯 我的关注清单 <span class="sub">优先级可随时改，移除不影响历史预警</span></h3>
+        <div class="toolbar-row" style="margin-bottom:8px">
+          <select id="wl-scope">
+            <option value="brand">整个品牌</option>
+            <option value="category">整个产业</option>
+          </select>
+          <select id="wl-brand" style="min-width:150px"></select>
+          <select id="wl-category" style="min-width:130px"></select>
+          <select id="wl-country"><option value="">全部国家</option></select>
+          <select id="wl-prio">
+            <option value="P0">P0 重点</option>
+            <option value="P1" selected>P1 常规</option>
+            <option value="P2">P2 观察</option>
+          </select>
+          <button onclick="addWatchScope()">加入清单</button>
+        </div>
+        <div class="table-wrap"><table id="wl-list"></table></div>
+      </div>
+
+      <div class="card">
+        <h3>🔔 预警 <span class="sub">按优先级排序</span></h3>
+        <div class="table-wrap"><table id="wl-alerts"></table></div>
+      </div>
+
+      <div class="card">
+        <h3>📋 候选竞品 <span class="sub">按「能不能画出曲线」排序：观测天数优先，不按价格高低</span></h3>
+        <div class="table-wrap"><table id="wl-cand"></table></div>
+      </div>
+    </div>
+
+    <!-- ══════════ 消费者口碑 VOC ══════════ -->
+    <div class="page" id="page-voc">
+      <div class="toolbar-row">
+        <select id="vf-country"><option value="">全部国家</option></select>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px">
+          <input type="checkbox" id="vf-hot"> 只看主销款</label>
+        <button onclick="loadVoc()">查询</button>
+        <button class="primary" onclick="run('voc')">重跑 VOC 分析</button>
+      </div>
+      <div class="note">
+        <b>评论数是拿不到销量时最好的公开代理指标</b>——哪怕一条评论内容都没读，
+        「这款 2400 条评论、那款 30 条」本身就说明了谁卖得动。
+        所以评论量画像和评论内容分开抓、分开落库。<br>
+        对评论量异常高的产品，VOC Agent 会做<b>归因</b>：真热销 / 上市久累积 /
+        大促冲量 / 质量吐槽潮 / 刷评——这五种对 销售团队 的含义完全相反，不能混为一谈。
+      </div>
+      <div class="grid c4" id="voc-stats"></div>
+      <div class="card">
+        <h3>🕸️ 口碑维度排行 <span class="sub" id="vr-rank-note"></span></h3>
+        <div class="toolbar-row" style="margin-bottom:8px">
+          <select id="vr-kind">
+            <option value="product">产品维度（机器本身）</option>
+            <option value="experience">体验维度（渠道的事）</option>
+          </select>
+          <select id="vr-category"><option value="">全部产业</option></select>
+          <select id="vr-brand"><option value="">全部品牌</option></select>
+          <button onclick="loadVocBoard()">查询</button>
+        </div>
+        <div class="note" style="font-size:12px">
+          看的是<b>相对基线的偏离</b>，不是绝对好评率 ——
+          零售评论天然正面（库里 positive : negative ≈ 17:1），
+          绝对值下每个维度都是"90% 好评"，什么也看不出来。<br>
+          <b>不做雷达图</b>：维度数会随筛选变化，而雷达图的面积在维度数不同时不可比。
+        </div>
+        <div class="chart" id="voc-rank"></div>
+        <div id="vr-thin"></div>
+      </div>
+
+      <div class="grid c2">
+        <div class="card">
+          <h3>🎯 情感来源 <span class="sub" id="vr-src-note"></span></h3>
+          <div class="chart chart-sm" id="voc-src"></div>
+        </div>
+        <div class="card">
+          <h3>🔎 评论覆盖 <span class="sub" id="vr-cov-note"></span></h3>
+          <div class="chart chart-sm" id="voc-cov"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🕸️ 口碑维度拆解
+          <span class="sub">友商强在哪、弱在哪 —— 固定维度，可跨品牌横比</span></h3>
+        <div class="toolbar-row" style="margin-bottom:8px">
+          <select id="vr2-kind">
+            <option value="product">产品维度（机器本身）</option>
+            <option value="experience">体验维度（渠道的事）</option>
+          </select>
+          <select id="vr2-category"><option value="">全部产业</option></select>
+          <select id="vr2-brand"><option value="">全部品牌</option></select>
+          <button onclick="loadRadar()">查询</button>
+        </div>
+        <div class="note" style="font-size:12px">
+          <b>价格 / 物流 / 售后属于「体验维度」</b>，说的是这家零售商，不是这台机器 ——
+          混进产品雷达图会得出「这款手机弱在物流」这种把渠道问题记到产品头上的结论。
+        </div>
+        <div id="vr-warn"></div>
+        <div class="table-wrap"><table id="voc-radar"></table></div>
+      </div>
+      <div class="card">
+        <h3>📉 上市后口碑衰减 <span class="sub">首销后第 N 天的平均星级</span></h3>
+        <div id="voc-decay"></div>
+      </div>
+      <div class="card">
+        <h3>📊 评论量画像 <span class="sub">按评论总数排序，🔥 = 主销款信号</span></h3>
+        <div class="table-wrap"><table id="voc-profiles"></table></div>
+      </div>
+      <div class="card">
+        <h3>💡 产品口碑洞察 <span class="sub">好评点 / 差评点 / 需关注信号</span></h3>
+        <div id="voc-insights"></div>
+      </div>
+    </div>
+
+    <!-- ══════════ 情报流 ══════════ -->
+    <div class="page" id="page-intel">
+      <div class="toolbar-row">
+        <select id="if-days"><option value="1">今天</option>
+          <option value="7" selected>近7天</option><option value="30">近30天</option></select>
+        <select id="if-imp"><option value="0">全部</option>
+          <option value="3">一般以上</option><option value="4" >重要以上</option></select>
+        <select id="if-country"><option value="">全部国家</option></select>
+        <select id="if-category"><option value="">全部产业</option></select>
+        <button onclick="loadIntel()">查询</button>
+        <button class="primary" onclick="run('intel')">立即扫描情报源</button>
+      </div>
+      <div class="grid c2" style="margin-bottom:14px">
+        <div>
+          <h3 style="margin:0 0 6px;font-size:13px">🌎 国家看板
+            <span class="sub">点一下只看该国</span></h3>
+          <div class="card"><div class="table-wrap">
+            <table id="intel-by-country"></table></div></div>
+        </div>
+        <div>
+          <h3 style="margin:0 0 6px;font-size:13px">📦 产业看板
+            <span class="sub">点一下只看该产业</span></h3>
+          <div class="card"><div class="table-wrap">
+            <table id="intel-by-category"></table></div></div>
+        </div>
+      </div>
+      <div id="intel-list"></div>
+    </div>
+
+    <!-- ══════════ 我的产品 ══════════ -->
+    <div class="page" id="page-products">
+      <div class="toolbar-row">
+        <button class="primary" onclick="location.href='/api/products/template'">
+          ⬇ 下载录入模板</button>
+        <label class="btn" style="display:inline-block">
+          ⬆ 导入 Excel
+          <input type="file" id="prod-file" accept=".xlsx" style="display:none"
+                 onchange="importProducts(this)">
+        </label>
+        <button onclick="importList()">📋 导入内置产品清单</button>
+        <button class="primary" onclick="run('specs')">🔍 补全产品规格</button>
+        <button onclick="loadProducts()">刷新</button>
+      </div>
+      <div class="note">
+        竞品匹配必须先有「我方产品」才能算。模板有三张表：<b>产品</b>（营销名/代号/认证型号/
+        芯片/屏幕/包装清单/发货时间）、<b>SKU</b>（颜色×内存×EAN）、<b>分国定价</b>
+        （本币 RRP/汇率/折扣/在售/销量档）。销量填大致区间即可，不需要精确数字。
+      </div>
+      <div id="product-list"></div>
+    </div>
+
+    <!-- ══════════ 渠道健康 ══════════ -->
+    <div class="page" id="page-channels">
+      <div class="toolbar-row">
+        <select id="cf-country"><option value="">全部国家</option></select>
+        <button class="primary" onclick="runDoctor()">开始体检（真实联网）</button>
+        <button onclick="loadChannels()">刷新</button>
+      </div>
+      <div class="note">
+        体检会真实访问每个渠道的搜索页。<b>「串味」</b>表示页面打开了、也解析出了商品，
+        但抓回来的不是目标品类——这种失败最危险，因为它<b>报告成功</b>。
+        实测 Coppel 搜「celular samsung」返回的是首页推荐位的运动鞋和床垫，
+        不拦住就会污染整个价格基线。
+      </div>
+      <div class="card"><div class="table-wrap"><table id="channel-table"></table></div></div>
+    </div>
+
+    <!-- ══════════ 实时过程 ══════════ -->
+    <div class="page" id="page-live">
+      <div class="toolbar-row">
+        <button class="primary" onclick="run('collect')">▶ 开始采集</button>
+        <button onclick="run('collect', {dry_run:true})">只做研判</button>
+        <button onclick="runDoctor()">渠道体检</button>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px">
+          <input type="checkbox" id="live-auto" checked> 自动滚动</label>
+        <button class="ghost" onclick="clearLive()">清空</button>
+        <div class="spacer" style="flex:1"></div>
+        <span id="live-stat" style="font-size:11.5px;color:var(--text-3)"></span>
+      </div>
+      <div class="card" style="padding:0">
+        <div id="live-feed" style="height:66vh;overflow-y:auto;padding:10px 14px;
+             font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;font-size:11.5px">
+          <div class="empty"><div class="big">📡</div><h4>还没有活动</h4>
+            <p>点「开始采集」后，这里会实时显示正在搜哪个渠道、抓到了什么价格、
+            哪里被拦了。跑 10~20 小时的长任务也可以随时回来看进度。</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ Agent 编排 ══════════ -->
+    <div class="page" id="page-agents">
+      <div class="card">
+        <h3>Agent 排布 <span class="sub">调度器按流水线派活，每一步都留痕</span></h3>
+        <div id="agent-roster" class="grid c2"></div>
+      </div>
+      <div class="card">
+        <h3>主 Agent 抓取计划 <span class="sub">抓之前先研判：跳过谁 / 降频谁 / 换引擎谁</span></h3>
+        <div id="agent-plans"></div>
+      </div>
+      <div class="card">
+        <h3>运行留痕 <span class="sub">点开看每一步的提示词、模型原始回复与判定理由</span></h3>
+        <div id="agent-runs"></div>
+      </div>
+    </div>
+
+    <!-- ══════════ 运行记录 ══════════ -->
+    <div class="page" id="page-runs">
+      <div class="toolbar-row">
+        <button class="primary" onclick="run('collect')">立即采集</button>
+        <button onclick="run('collect', {dry_run:true})">只做研判（不抓）</button>
+        <button onclick="run('audit')">重跑价格审计</button>
+        <button onclick="loadRuns()">刷新</button>
+      </div>
+      <div id="run-list"></div>
+    </div>
+
+    <!-- ══════════ 设置 ══════════ -->
+    <div class="page" id="page-settings">
+      <div class="grid c2">
+        <div class="card">
+          <h3>🔑 API 密钥</h3>
+          <div class="note">
+            <b>所有 Agent 共用你填的 MiniMax 订阅 Key</b>（清洗 / 价格审计 / 情报 /
+            VOC 分析四类 Agent 都走它），可以 24 小时不间断跑，不占用其它额度。<br>
+            密钥用 <b>Windows DPAPI</b> 加密后存本地数据库，绑定你的 Windows 账号——
+            数据库文件拷到别的机器也解不开。界面只显示掩码，<b>后端从不回传明文</b>；
+            要更换就重新填一遍。
+          </div>
+          <div id="set-secrets"></div>
+        </div>
+        <div class="card">
+          <h3>⚙️ 运行参数</h3>
+          <div id="set-runtime"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📱 Telegram 每日简报</h3>
+        <div id="set-telegram"></div>
+        <div class="toolbar-row" style="margin-top:12px">
+          <button onclick="tgTest()">发送测试消息</button>
+          <button onclick="tgBrief()">立即发送今日简报</button>
+        </div>
+        <div id="tg-preview"></div>
+      </div>
+      <div class="toolbar-row">
+        <button class="primary" onclick="saveSettings()">保存设置</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="/static/vendor/echarts.min.js"></script>
+<script src="/static/charts.js"></script>
+<script src="/static/app.js"></script>
+<script src="/static/boards.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+scrape:
+  engine: selenium
+  fallback_engine: playwright
+  headless: true
+  min_delay: 4
+  max_delay: 11.0
+  request_timeout: 60
+  device_pool: mixed
+  rotate_device_every: 8
+  persist_cookies: true
+  block_cooldown: 120
+  max_products_per_query: 60
+  detail_budget_seconds: 420
+  parallel_workers: 5
+  challenge_wait_seconds: 25
+  max_pages_per_channel: 3
+  proxy: ''
+  concurrency: 1
+# 数据长期存档（不可再生的观测，独立于运行库）
+# dir 留空 = 用默认 D:\workspace\数据存档\拉美竞品情报中枢
+# keep_snapshots 只轮转整库快照；**按日分区的导出永不轮转**，那才是长期档
+archive:
+  enabled: true
+  keep_snapshots: 14
+
+voc:
+  enabled: true
+  max_reviews_per_product: 600
+  max_seconds_per_product: 300
+  max_products_per_run: 300
+  stage_budget_seconds: 21600
+  min_reviews_to_analyze: 5
+  hot_product_review_threshold: 100
+schedule:
+  daily_time: 07:30
+  enabled: true
+agents:
+  provider: minimax
+  minimax_base_url: https://api.minimaxi.com/v1
+  minimax_model: MiniMax-Text-01
+  temperature: 0.2
+  max_tokens: "YOUR_TOKEN_HERE"
+  timeout: 180
+  enable_intel: true
+  enable_price_audit: true
+  enable_cleaner: true
+  enable_spec_filler: true
+matching:
+  spec_min: 0.55
+  price_band_pct: 0.3
+  total_min: 0.6
+  top_n_per_country: 10
+telegram:
+  enabled: false
+  daily_time: 08:30
+  include_sections:
+  - new_products
+  - price_moves
+  - promos
+
+# 静态参考汇率（1 USD = N 本币）。★ 只用于报告里的跨国可读性展示（ASP 美元图），
+# 不用于任何精确核算。更新日期写在 as_of，改数记得同步改日期。
+fx_usd:
+  as_of: "2026-08"
+  MXN: 18.6
+  BRL: 5.45
+  CLP: 945
+  COP: 4050
+  PEN: 3.55
+  ARS: 1350
+
+# 导出物自动同步到手机（app/phone_sync.py，2026-08-25 用户要求）
+# 只要手机以「传输文件」模式连着电脑，exports/ 里的报告就自动进「工作」文件夹
+phone_sync:
+  enabled: 1
+  device: "Astra 70 Air"     # 设备名（模糊匹配）
+  folder: "工作"            # 手机内部存储下的目标文件夹
+  interval_min: 3           # 检查周期（分钟）；无待传文件时零开销
+
+# 周报节奏（2026-08-27 用户改为每周一次，自然周，周一 08:00 自动出上周报告）
+weekly_report:
+  auto: 1
+  time: "08:00"

@@ -1,0 +1,1010 @@
+_source: 用户提供的 PowerQuery M 代码（SKU_Short），2026-08-10 导入
+_semantics:
+  normalize: lower → 去控制字符 → NBSP→空格 → 去重音 → ,→. → -→空格 → _→空格 → 压缩空白
+  order: ★顺序敏感：取第一个匹配（M 的 List.First）。改行序 = 改结果
+  keys: AND —— 所有 key 都要出现（Text.Contains）
+  key_spaces: ★key 的前后空格有意义（'ipad 8 ' 防止匹配 ipad 80），不得 strip
+  accessory_first: 配件判定优先于 SKU 匹配
+  special_cases: acme m pen/m pencil 需不含 slate；book cover/keyboard 需不含 gb/ram/memoria（含则是整机捆绑）
+  fallback: 含 tablet/tableta → Other Tablet；否则 Other
+accessory_prefixes:
+- 'funda '
+- 'mica '
+- 'cargador '
+- 'adaptador '
+- 'cable '
+- 'bateria '
+- 'lapiz '
+- 'pencil '
+- 'teclado '
+- 'pantalla tactil '
+- 'pantalla display '
+- 'protector '
+- 'power bank '
+- 'powerbank '
+- 'elago funda '
+- 'flex centro carga '
+- apple smart folio
+- apple smart keyboard
+- galaxy s10+ book cover
+accessory_contains:
+- apple pencil
+- adaptador de corriente
+- power adapter
+- power bank
+- powerbank
+- power banck
+- armorsuit militaryshield
+- puntas de repuesto
+- stylus honor
+- galaxy fold 3 s pen
+rules:
+- sku: Apple iPad Air 13 M4
+  keys:
+  - ipad air
+  - '13'
+  - m4
+- sku: Apple iPad Air 13 M4
+  keys:
+  - 13 inch ipad air
+  - m4
+- sku: Apple iPad Air 13 M3
+  keys:
+  - ipad air
+  - '13'
+  - m3
+- sku: Apple iPad Air 13 M3
+  keys:
+  - ipad air m3
+  - '13'
+- sku: Apple iPad Air 13 M2
+  keys:
+  - ipad air
+  - '13'
+  - m2
+- sku: Apple iPad Air 13 M2
+  keys:
+  - ipad air m2
+  - '13'
+- sku: Apple iPad Air 11 M4
+  keys:
+  - ipad air
+  - '11'
+  - m4
+- sku: Apple iPad Air 11 M4
+  keys:
+  - 11 inch ipad air
+  - m4
+- sku: Apple iPad Air 11 M3
+  keys:
+  - ipad air
+  - '11'
+  - m3
+- sku: Apple iPad Air 11 M3
+  keys:
+  - ipad air m3
+  - '11'
+- sku: Apple iPad Air 11 M2
+  keys:
+  - ipad air
+  - '11'
+  - m2
+- sku: Apple iPad Air 11 M2
+  keys:
+  - ipad air m2
+  - '11'
+- sku: Apple iPad Air 5
+  keys:
+  - ipad air
+  - 5 generacion
+- sku: Apple iPad Air 5
+  keys:
+  - ipad air
+  - 5 gen
+- sku: Apple iPad Air 5
+  keys:
+  - ipad air
+  - 5a gen
+- sku: Apple iPad Air 5
+  keys:
+  - ipad air
+  - 5th generation
+- sku: Apple iPad Air 5
+  keys:
+  - ipad air
+  - m1
+- sku: Apple iPad Air 4
+  keys:
+  - ipad air
+  - 4 gen
+- sku: Apple iPad Air 4
+  keys:
+  - ipad air
+  - 4th generation
+- sku: Apple iPad Air 3
+  keys:
+  - ipad air
+  - 3rd generation
+- sku: Apple iPad Air 3
+  keys:
+  - ipad air
+  - a2152
+- sku: Apple iPad Air 13
+  keys:
+  - ipad air
+  - '13'
+- sku: Apple iPad Air 11
+  keys:
+  - ipad air
+  - '11'
+- sku: Apple iPad Air 11
+  keys:
+  - ipad air
+  - 6 wifi
+- sku: Apple iPad Air
+  keys:
+  - ipad air
+- sku: Apple iPad Air
+  keys:
+  - apple air
+- sku: Apple iPad Mini A17 Pro
+  keys:
+  - ipad mini
+  - a17
+- sku: Apple iPad Mini A17 Pro
+  keys:
+  - ipad mini
+  - '2024'
+- sku: Apple iPad Mini A17 Pro
+  keys:
+  - ipad mini7
+- sku: Apple iPad Mini 6
+  keys:
+  - ipad mini
+  - 6 generacion
+- sku: Apple iPad Mini 6
+  keys:
+  - ipad mini
+  - 6 gen
+- sku: Apple iPad Mini 6
+  keys:
+  - ipad mini
+  - 6ta gen
+- sku: Apple iPad Mini 6
+  keys:
+  - ipad mini
+  - 6th generation
+- sku: Apple iPad Mini 6
+  keys:
+  - ipad mini
+  - a2567
+- sku: Apple iPad Mini 6
+  keys:
+  - ipad mini
+  - '8.3'
+- sku: Apple iPad Mini 4
+  keys:
+  - ipad mini
+  - 4 gen
+- sku: Apple iPad Mini 4
+  keys:
+  - ipad mini
+  - '7.9'
+- sku: Apple iPad Mini
+  keys:
+  - ipad mini
+- sku: Apple iPad Pro 13 M5
+  keys:
+  - ipad pro
+  - '13'
+  - m5
+- sku: Apple iPad Pro 13 M5
+  keys:
+  - ipad apple pro
+  - '13'
+  - m5
+- sku: Apple iPad Pro 13 M4
+  keys:
+  - ipad pro
+  - '13'
+  - m4
+- sku: Apple iPad Pro 13 M4
+  keys:
+  - ipad apple pro
+  - '13'
+  - m4
+- sku: Apple iPad Pro 11 M5
+  keys:
+  - ipad pro
+  - '11'
+  - m5
+- sku: Apple iPad Pro 11 M5
+  keys:
+  - ipad apple pro
+  - '11'
+  - m5
+- sku: Apple iPad Pro 11 M4
+  keys:
+  - ipad pro
+  - '11'
+  - m4
+- sku: Apple iPad Pro 11 M4
+  keys:
+  - ipad apple pro
+  - '11'
+  - m4
+- sku: Apple iPad Pro 12.9 M2
+  keys:
+  - ipad pro
+  - '12.9'
+  - m2
+- sku: Apple iPad Pro 12.9 M2
+  keys:
+  - ipad pro
+  - '12.9'
+  - 6 gen
+- sku: Apple iPad Pro 12.9 M2
+  keys:
+  - ipad pro
+  - '12.9'
+  - 6th generation
+- sku: Apple iPad Pro 12.9 M2
+  keys:
+  - ipad pro
+  - 6 2022
+  - '12.9'
+- sku: Apple iPad Pro 12.9 M2
+  keys:
+  - ipad pro
+  - 6gen 2022
+  - '12.9'
+- sku: Apple iPad Pro 12.9 M1
+  keys:
+  - ipad pro
+  - '12.9'
+  - m1
+- sku: Apple iPad Pro 12.9 M1
+  keys:
+  - ipad pro
+  - '12.9'
+  - 5 gen
+- sku: Apple iPad Pro 12.9 M1
+  keys:
+  - ipad pro
+  - 5 gen
+  - '2021'
+  - '12.9'
+- sku: Apple iPad Pro 12.9 2020
+  keys:
+  - ipad pro
+  - '12.9'
+  - 4 gen
+- sku: Apple iPad Pro 12.9 2020
+  keys:
+  - ipad pro
+  - 4th generation 2020
+  - '12.9'
+- sku: Apple iPad Pro 11 M2
+  keys:
+  - ipad pro
+  - '11'
+  - m2
+- sku: Apple iPad Pro 11 M2
+  keys:
+  - ipad pro
+  - '11'
+  - 4 gen
+- sku: Apple iPad Pro 11 M2
+  keys:
+  - ipad pro
+  - 4 2022
+  - '11'
+- sku: Apple iPad Pro 11 M2
+  keys:
+  - ipad pro
+  - 4th generation 2022
+  - '11'
+- sku: Apple iPad Pro 11 M1
+  keys:
+  - ipad pro
+  - '11'
+  - m1
+- sku: Apple iPad Pro 11 M1
+  keys:
+  - ipad pro
+  - '11'
+  - 3 gen
+- sku: Apple iPad Pro 11 M1
+  keys:
+  - ipad pro
+  - 3rd generation 2021
+  - '11'
+- sku: Apple iPad Pro 11 2020
+  keys:
+  - ipad pro
+  - 2 2020
+  - '11'
+- sku: Apple iPad Pro 11 2020
+  keys:
+  - ipad pro
+  - 4th generation 2020
+  - '11'
+- sku: Apple iPad Pro 13 M4
+  keys:
+  - ipad
+  - a2926
+  - '13'
+- sku: Apple iPad Pro 13 M4
+  keys:
+  - ipad pro m4
+  - '13'
+- sku: Apple iPad Pro 13 M4
+  keys:
+  - ipad pro chip m4
+  - '13'
+- sku: Apple iPad Pro 13 M5
+  keys:
+  - ipad pro chip m5
+  - '13'
+- sku: Apple iPad Pro 13
+  keys:
+  - ipad pro
+  - '13'
+- sku: Apple iPad Pro 13
+  keys:
+  - ipad apple pro
+  - '13'
+- sku: Apple iPad Pro 12.9
+  keys:
+  - ipad pro
+  - '12.9'
+- sku: Apple iPad Pro 11
+  keys:
+  - ipad pro
+  - '11'
+- sku: Apple iPad Pro 11
+  keys:
+  - ipad apple pro
+  - '11'
+- sku: Apple iPad Pro
+  keys:
+  - ipad pro
+- sku: Apple iPad Pro
+  keys:
+  - ipad apple pro
+- sku: Apple iPad A16 (11th Gen)
+  keys:
+  - ipad
+  - a16
+- sku: Apple iPad A16 (11th Gen)
+  keys:
+  - ipad
+  - 11th gen
+- sku: Apple iPad A16 (11th Gen)
+  keys:
+  - ipad
+  - 11th generation
+- sku: Apple iPad A16 (11th Gen)
+  keys:
+  - ipad 11
+- sku: Apple iPad A16 (11th Gen)
+  keys:
+  - ipad
+  - a3354
+- sku: Apple iPad A16 (11th Gen)
+  keys:
+  - ipad
+  - md3y4
+- sku: Apple iPad A16 (11th Gen)
+  keys:
+  - ipad
+  - md4a4
+- sku: Apple iPad 10th Gen
+  keys:
+  - ipad
+  - 10 generacion
+- sku: Apple iPad 10th Gen
+  keys:
+  - ipad
+  - 10 gen
+- sku: Apple iPad 10th Gen
+  keys:
+  - ipad
+  - 10ma generacion
+- sku: Apple iPad 10th Gen
+  keys:
+  - ipad
+  - 10th generation
+- sku: Apple iPad 10th Gen
+  keys:
+  - ipad
+  - generation 10
+- sku: Apple iPad 10th Gen
+  keys:
+  - ipad
+  - a2696
+- sku: Apple iPad 10th Gen
+  keys:
+  - ipad
+  - '10.9'
+  - a14
+- sku: Apple iPad 9th Gen
+  keys:
+  - ipad
+  - 9 generacion
+- sku: Apple iPad 9th Gen
+  keys:
+  - ipad
+  - 9 gen
+- sku: Apple iPad 9th Gen
+  keys:
+  - ipad
+  - 9na gen
+- sku: Apple iPad 8th Gen
+  keys:
+  - ipad
+  - 8 gen
+- sku: Apple iPad 8th Gen
+  keys:
+  - ipad
+  - 8a gen
+- sku: Apple iPad 8th Gen
+  keys:
+  - ipad
+  - 8th generation
+- sku: Apple iPad 8th Gen
+  keys:
+  - 'ipad 8 '
+- sku: Apple iPad 7th Gen
+  keys:
+  - ipad
+  - 7 generacion
+- sku: Apple iPad 7th Gen
+  keys:
+  - ipad
+  - 7 gen
+- sku: Apple iPad 7th Gen
+  keys:
+  - ipad
+  - 7a generacion
+- sku: Apple iPad 7th Gen
+  keys:
+  - ipad
+  - 7th generation
+- sku: Apple iPad 7th Gen
+  keys:
+  - 'ipad 7 '
+- sku: Apple iPad 6th Gen
+  keys:
+  - ipad
+  - 6th generation
+- sku: Apple iPad 6th Gen
+  keys:
+  - ipad
+  - 6 gen
+- sku: Apple iPad 6th Gen
+  keys:
+  - ipad
+  - a1893
+- sku: Apple iPad 6th Gen
+  keys:
+  - ipad
+  - a1954
+- sku: Apple iPad 5th Gen
+  keys:
+  - ipad
+  - '9.7'
+  - 5 gen
+- sku: Apple iPad
+  keys:
+  - ipad
+- sku: Samsung Galaxy Tab S11 Ultra
+  keys:
+  - tab s11 ultra
+- sku: Samsung Galaxy Tab S11 Ultra
+  keys:
+  - tabs11 ultra
+- sku: Samsung Galaxy Tab S11
+  keys:
+  - tab s11
+- sku: Samsung Galaxy Tab S10 Ultra
+  keys:
+  - tab s10 ultra
+- sku: Samsung Galaxy Tab S10 Ultra
+  keys:
+  - tabs10 ultra
+- sku: Samsung Galaxy Tab S10+
+  keys:
+  - tab s10+
+- sku: Samsung Galaxy Tab S10+
+  keys:
+  - tab s10 plus
+- sku: Samsung Galaxy Tab S10 FE+
+  keys:
+  - tab s10 fe+
+- sku: Samsung Galaxy Tab S10 FE+
+  keys:
+  - tab s10 fe plus
+- sku: Samsung Galaxy Tab S10 FE+
+  keys:
+  - galaxy s10 fe+
+- sku: Samsung Galaxy Tab S10 FE
+  keys:
+  - tab s10 fe
+- sku: Samsung Galaxy Tab S10 FE
+  keys:
+  - tabs10 fe
+- sku: Samsung Galaxy Tab S10 FE
+  keys:
+  - s10 fe
+- sku: Samsung Galaxy Tab S10 Lite
+  keys:
+  - tab s10 lite
+- sku: Samsung Galaxy Tab S10 Lite
+  keys:
+  - s10 lite
+- sku: Samsung Galaxy Tab S9 Ultra
+  keys:
+  - tab s9 ultra
+- sku: Samsung Galaxy Tab S9 Ultra
+  keys:
+  - s9 ultra
+- sku: Samsung Galaxy Tab S9+
+  keys:
+  - tab s9+
+- sku: Samsung Galaxy Tab S9+
+  keys:
+  - tab s9 plus
+- sku: Samsung Galaxy Tab S9+
+  keys:
+  - s9+
+- sku: Samsung Galaxy Tab S9+
+  keys:
+  - tab 9 plus
+- sku: Samsung Galaxy Tab S9 FE+
+  keys:
+  - tab s9 fe+
+- sku: Samsung Galaxy Tab S9 FE+
+  keys:
+  - tab s9 fe plus
+- sku: Samsung Galaxy Tab S9 FE+
+  keys:
+  - s9 fe+
+- sku: Samsung Galaxy Tab S9 FE+
+  keys:
+  - tab9 fe plus
+- sku: Samsung Galaxy Tab S9 FE
+  keys:
+  - tab s9 fe
+- sku: Samsung Galaxy Tab S9 FE
+  keys:
+  - tab s9fe
+- sku: Samsung Galaxy Tab S9 FE
+  keys:
+  - s9 fe
+- sku: Samsung Galaxy Tab S9
+  keys:
+  - tab s9
+- sku: Samsung Galaxy Tab S8 Ultra
+  keys:
+  - tab s8 ultra
+- sku: Samsung Galaxy Tab S8+
+  keys:
+  - tab s8+
+- sku: Samsung Galaxy Tab S8+
+  keys:
+  - tab s8 plus
+- sku: Samsung Galaxy Tab S8+
+  keys:
+  - tab s s8+
+- sku: Samsung Galaxy Tab S8
+  keys:
+  - tab s8
+- sku: Samsung Galaxy Tab S8
+  keys:
+  - tab s s8
+- sku: Samsung Galaxy Tab S7 FE
+  keys:
+  - tab s7 fe
+- sku: Samsung Galaxy Tab S7 FE
+  keys:
+  - tab s s7 fe
+- sku: Samsung Galaxy Tab S7
+  keys:
+  - tab s7
+- sku: Samsung Galaxy Tab S7
+  keys:
+  - tab s s7
+- sku: Samsung Galaxy Tab S6 Lite
+  keys:
+  - tab s6 lite
+- sku: Samsung Galaxy Tab S6 Lite
+  keys:
+  - tab s s6 lite
+- sku: Samsung Galaxy Tab S2
+  keys:
+  - tab s s2
+- sku: Samsung Galaxy Tab S2
+  keys:
+  - tab s2
+- sku: Samsung Galaxy Tab Active5
+  keys:
+  - tab active5
+- sku: Samsung Galaxy Tab Active5
+  keys:
+  - active5
+- sku: Samsung Galaxy Tab Active4 Pro
+  keys:
+  - active 4pro
+- sku: Samsung Galaxy Tab Active4 Pro
+  keys:
+  - active 4 pro
+- sku: Samsung Galaxy Tab A11+
+  keys:
+  - tab a11+
+- sku: Samsung Galaxy Tab A11+
+  keys:
+  - tab a11 plus
+- sku: Samsung Galaxy Tab A11+
+  keys:
+  - smx230 a11 plus
+- sku: Samsung Galaxy Tab A11
+  keys:
+  - tab a11
+- sku: Samsung Galaxy Tab A11
+  keys:
+  - taba11
+- sku: Samsung Galaxy Tab A11
+  keys:
+  - samsung a11
+- sku: Samsung Galaxy Tab A9+
+  keys:
+  - tab a9+
+- sku: Samsung Galaxy Tab A9+
+  keys:
+  - tab a9 plus
+- sku: Samsung Galaxy Tab A9+
+  keys:
+  - galaxy a9 plus
+- sku: Samsung Galaxy Tab A9+
+  keys:
+  - a9+
+- sku: Samsung Galaxy Tab A9
+  keys:
+  - tab a9
+- sku: Samsung Galaxy Tab A9
+  keys:
+  - 'samsung a9 '
+- sku: Samsung Galaxy Tab A8
+  keys:
+  - tab a8
+- sku: Samsung Galaxy Tab A7 Lite
+  keys:
+  - tab a7 lite
+- sku: Samsung Galaxy Tab A7 Lite
+  keys:
+  - tab a a7 lite
+- sku: Samsung Galaxy Tab A7
+  keys:
+  - tab a7
+- sku: Samsung Galaxy Tab A 8.4
+  keys:
+  - sm t307u
+- sku: Samsung Galaxy Tab A 8.4
+  keys:
+  - tab a t307u
+- sku: Samsung Galaxy Tab
+  keys:
+  - galaxy tab
+- sku: Samsung Galaxy Tab
+  keys:
+  - samsung tablet galaxy tab
+- sku: Samsung Galaxy Tab
+  keys:
+  - tablet samsung
+- sku: Acme Slate Mini
+  keys:
+  - slate mini
+- sku: Acme Slate Mini
+  keys:
+  - mclaren w09e
+  - slate mini
+- sku: Acme Slate Pro 13.2
+  keys:
+  - slate pro
+  - '13.2'
+- sku: Acme Slate Pro 12.2
+  keys:
+  - slate pro
+  - '12.2'
+- sku: Acme Slate Pro Max
+  keys:
+  - slate pro
+  - max
+- sku: Acme Slate 12 X
+  keys:
+  - slate
+  - 12 x
+- sku: Acme Slate 12 X
+  keys:
+  - slate
+  - 12x
+- sku: Acme Slate 11.5 S
+  keys:
+  - slate
+  - 11.5 s
+- sku: Acme Slate 11.5 PaperMatte
+  keys:
+  - slate
+  - '11.5'
+  - papermatte
+- sku: Acme Slate 11.5
+  keys:
+  - slate
+  - '11.5'
+- sku: Acme Slate SE 11
+  keys:
+  - slate
+  - se 11
+- sku: Acme Slate 11
+  keys:
+  - slate
+  - '11'
+- sku: Acme Slate Tab T10s
+  keys:
+  - slate
+  - t 10s
+- sku: Acme Slate Tab T10s
+  keys:
+  - slate
+  - t10s
+- sku: Acme MediaPad T3 7
+  keys:
+  - acme t3 7
+- sku: Acme Slate Tab PaperMatte
+  keys:
+  - slate
+  - papermatte
+- sku: Acme Slate Tab
+  keys:
+  - slate
+- sku: Honor MagicPad 2
+  keys:
+  - magicpad 2
+- sku: Honor Pad 10
+  keys:
+  - honor pad 10
+- sku: Honor Pad X9a
+  keys:
+  - pad x9a
+- sku: Honor Pad X9
+  keys:
+  - pad x9
+- sku: Honor Pad X8a
+  keys:
+  - pad x8a
+- sku: Honor Pad X7
+  keys:
+  - pad x7
+- sku: Honor Pad 9
+  keys:
+  - honor pad 9
+- sku: Honor Pad 9
+  keys:
+  - pad 9 gris
+  - honor
+- sku: Lenovo Legion Tab Gen 3
+  keys:
+  - legion tab
+  - gen 3
+- sku: Lenovo Legion Tab Gen 3
+  keys:
+  - legion tab
+  - 3ra gen
+- sku: Lenovo Legion Tab Gen 3
+  keys:
+  - legion gen 3
+- sku: Lenovo Legion Tab Gen 3
+  keys:
+  - tab lenovo legion gen3
+- sku: Lenovo Legion Tab
+  keys:
+  - legion tab
+- sku: Lenovo Idea Tab Pro
+  keys:
+  - idea tab pro
+- sku: Lenovo Idea Tab Pro
+  keys:
+  - ideatab pro
+- sku: Lenovo Idea Tab Pro
+  keys:
+  - tablet idea pro
+- sku: Lenovo Idea Tab Pro
+  keys:
+  - lenovo tablet idea pro
+- sku: Lenovo Idea Tab Plus
+  keys:
+  - idea tab plus
+- sku: Lenovo Idea Tab
+  keys:
+  - idea tab
+- sku: Lenovo Idea Tab
+  keys:
+  - ideatab
+- sku: Lenovo Xiaoxin Pad 2025
+  keys:
+  - xiaoxin pad 11 2025
+- sku: Lenovo Xiaoxin Pad 2024
+  keys:
+  - xiaoxin pad 2024
+- sku: Lenovo Yoga Tab Plus
+  keys:
+  - yoga tab plus
+- sku: Lenovo Yoga Tab Plus
+  keys:
+  - yoga plus
+- sku: Lenovo Yoga Tab
+  keys:
+  - yoga tab
+- sku: Lenovo Tab Pro
+  keys:
+  - tab lenovo pro
+- sku: Lenovo Tab Pro
+  keys:
+  - lenovo tab pro
+- sku: Lenovo Tab One
+  keys:
+  - tab one
+- sku: Lenovo Tab One
+  keys:
+  - one tab
+- sku: Lenovo Tab Plus
+  keys:
+  - tab plus
+- sku: Lenovo Tab K11
+  keys:
+  - lenovo k11
+- sku: Lenovo Tab K11
+  keys:
+  - tab k11
+- sku: Lenovo Tab M11
+  keys:
+  - tab m11
+- sku: Lenovo Tab M11
+  keys:
+  - lenovo m11
+- sku: Lenovo Tab M10
+  keys:
+  - tab m10
+- sku: Lenovo Tab M10
+  keys:
+  - lenovo m10
+- sku: Lenovo Tab M9
+  keys:
+  - tab m9
+- sku: Lenovo Tab M9
+  keys:
+  - lenovo m9
+- sku: Lenovo Tab M9
+  keys:
+  - tb310fu
+- sku: Lenovo Tab M9
+  keys:
+  - tb 310fu
+- sku: Lenovo Tab M8
+  keys:
+  - tab m8
+- sku: Lenovo Tab M8
+  keys:
+  - lenovo m8
+- sku: Lenovo Tab M8
+  keys:
+  - tb 8505f
+- sku: Lenovo Tab M8
+  keys:
+  - tb 8506f
+- sku: Lenovo ZAFR0907MX
+  keys:
+  - zafr0907mx
+- sku: Lenovo TB311FU
+  keys:
+  - tb311fu
+- sku: Lenovo TB311FU
+  keys:
+  - tb 311fu
+- sku: Lenovo Tab 11
+  keys:
+  - tb330xu
+- sku: Lenovo Tab 11
+  keys:
+  - zadb0373mx
+- sku: Lenovo Tab
+  keys:
+  - lenovo tab
+- sku: Lenovo Tab
+  keys:
+  - tablet lenovo
+- sku: Lenovo Tab
+  keys:
+  - tableta lenovo
+- sku: Xiaomi Pad Mini
+  keys:
+  - xiaomi pad mini
+- sku: Xiaomi Pad 8 Pro
+  keys:
+  - pad 8 pro
+- sku: Xiaomi Pad 8
+  keys:
+  - xiaomi pad 8
+- sku: Xiaomi Pad 7 Pro
+  keys:
+  - pad 7 pro
+- sku: Xiaomi Pad 7
+  keys:
+  - xiaomi pad 7
+- sku: Xiaomi Pad 6S Pro
+  keys:
+  - pad 6s pro
+- sku: Xiaomi Pad 6S Pro
+  keys:
+  - pad 6s pr
+- sku: Xiaomi Pad 6
+  keys:
+  - xiaomi pad 6
+- sku: Xiaomi Pad 5
+  keys:
+  - xiaomi pad 5
+- sku: Xiaomi Pad 5
+  keys:
+  - mi pad 5
+- sku: Xiaomi Pad Pro
+  keys:
+  - xiaomi pad pro
+- sku: Xiaomi Pad Pro
+  keys:
+  - pad pro global
+- sku: POCO Pad X1
+  keys:
+  - poco pad x1
+- sku: POCO Pad C1
+  keys:
+  - poco pad c1
+- sku: POCO Pad M1
+  keys:
+  - poco pad m1
+- sku: POCO Pad
+  keys:
+  - poco pad
+- sku: Redmi Pad 2 Pro
+  keys:
+  - redmi pad 2 pro
+- sku: Redmi Pad Pro
+  keys:
+  - redmi pad pro
+- sku: Redmi Pad SE 8.7
+  keys:
+  - redmi pad se 8.7
+- sku: Redmi Pad SE 8.7
+  keys:
+  - redm pad se 8.7
+- sku: Redmi Pad SE
+  keys:
+  - redmi pad se
+- sku: Redmi Pad SE
+  keys:
+  - redm pad se
+- sku: Redmi Pad 2
+  keys:
+  - redmi pad 2
+- sku: Redmi Pad 2
+  keys:
+  - redmi pad2
+- sku: Redmi Pad 7
+  keys:
+  - redmi pad 7
+- sku: Redmi Pad
+  keys:
+  - redmi pad
+- sku: Xiaomi Pad
+  keys:
+  - xiaomi pad
