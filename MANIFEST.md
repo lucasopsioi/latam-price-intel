@@ -101,6 +101,11 @@ COPY     看板.cmd
 OVERLAY  LICENSE（docs-src 提供）
 OVERLAY  README.md（docs-src 提供）
 OVERLAY  config/my_products.example.csv（docs-src 提供）
+OVERLAY  docs/screenshots/overview.png（docs-src 提供）
+OVERLAY  docs/screenshots/price-board.png（docs-src 提供）
+OVERLAY  docs/screenshots/price-trend.png（docs-src 提供）
+OVERLAY  docs/screenshots/voice-of-customer.png（docs-src 提供）
+OVERLAY  tools/make_demo_db.py（docs-src 提供）
 REDACTED config/runtime.example.yaml（值全部机械打码为占位符）
 RENAMED  README.md
 RENAMED  README.md -> README.zh.md（中文版保留，英文主README来自docs-src）
@@ -187,9 +192,9 @@ RENAMED  tools/run_all_tests.py
 RENAMED  tools/tray.py
 RENAMED  tools/wait_then_restart.sh
 
-## 未进仓（按顶层路径归并，共 186836 个文件）
+## 未进仓（按顶层路径归并，共 185642 个文件）
 
-- `data` — 排除 186605 个文件
+- `data` — 排除 185411 个文件
 - `exports` — 排除 82 个文件
 - `app` — 排除 67 个文件
 - `logs` — 排除 41 个文件
