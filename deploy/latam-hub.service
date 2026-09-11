@@ -1,0 +1,64 @@
+[Unit]
+Description=拉美竞品情报中枢
+Documentation=file://@ROOT@/README.md
+After=network-online.target
+Wants=network-online.target
+
+# ★ 指数退避的等价物：5 分钟内起崩 5 次就不再无脑重启，避免"报警刷屏等于没有报警"。
+#   对应 tools/supervisor.py 里手写的 5s→15s→60s→3min→10min。
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=@USER@
+Group=@USER@
+WorkingDirectory=@ROOT@
+
+# ---- 密钥：从 chmod 600 的文件注入环境变量，一个都不落库 ----
+#   app/db.py 的 get_setting() 会优先读 LATAM_SECRET_*，读不到才查数据库。
+#   好处是 intel.db 备份/传输时不再带密钥。
+EnvironmentFile=@ETC@/secrets.env
+
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONUTF8=1
+Environment=LATAM_ARCHIVE_DIR=@VAR@/archive
+Environment=LATAM_VAULT_DIR=@VAR@/vault
+
+# ★★ 时区必须显式设。云服务器默认 UTC，而 runtime.yaml 里
+#    schedule.daily_time 是 07:30 —— 不设的话它会在北京时间 15:30 才开跑，
+#    而这个任务要跑 10~20 小时，等于整个作息错位。
+#    保持 Asia/Shanghai，你对"07:30 开始"的心智模型就不用改。
+Environment=TZ=Asia/Shanghai
+
+ExecStart=@ROOT@/.venv/bin/python @ROOT@/main.py serve --port 8765
+
+Restart=always
+RestartSec=5
+
+# ---- 内存闸 ----
+# ★ 这台机器同时跑 Claude Code。5 个 Chrome worker 内存失控时，
+#   MemoryMax 保证被 OOM-kill 的是本服务，不是你的开发会话。
+#   按 16G 机器留：本服务 ≤11G，剩下给 Claude Code + 系统。
+#   MemoryHigh 先施加回收压力，到 Max 才真杀。
+MemoryHigh=9G
+MemoryMax=11G
+
+# ---- 停止行为 ----
+# ★ KillMode=control-group 是关键：Chrome 是 Python 起的孙子进程，
+#   只杀主进程的话它们会活下来继续占着 user-data-dir ——
+#   这正是 reap_orphan_browsers() 要收拾的烂摊子。让 systemd 连锅端。
+KillMode=control-group
+KillSignal=SIGTERM
+TimeoutStopSec=60
+
+# ---- 基础加固 ----
+# 爬虫会主动加载不受信任的页面，能收紧就收紧。
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=@ROOT@ @VAR@
+
+[Install]
+WantedBy=multi-user.target

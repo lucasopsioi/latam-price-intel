@@ -1,0 +1,113 @@
+product_line,product_family,product_series,product,category_code
+Wearable,Watch GT,Aris智能表,WATCH GT 6,wearable
+Wearable,Watch GT,Kelo智能表,WATCH GT 6,wearable
+Wearable,Band,Talos1智能表,ACME Band 7 Pro v1,wearable
+Wearable,Watch Fit,Vireo1智能表,ACME Watch Fit 7 Active v2,wearable
+Wearable,Band,Nerio1智能表,ACME Band 7 v3,wearable
+Wearable,Watch Fit,Lark1智能表,ACME Watch Fit 7 SE v4,wearable
+Wearable,Band,Heron1智能表,ACME Band 8 Pro v1,wearable
+Wearable,Watch Fit,Strix1智能表,ACME Watch Fit 8 Active v2,wearable
+Wearable,Band,Taiga1智能表,ACME Band 8 v3,wearable
+Wearable,Watch Fit,Rigel1智能表,ACME Watch Fit 8 SE v4,wearable
+Wearable,Band,Talos2智能表,ACME Band 9 Pro v1,wearable
+Wearable,Watch Fit,Vireo2智能表,ACME Watch Fit 9 Active v2,wearable
+Wearable,Band,Nerio2智能表,ACME Band 9 v3,wearable
+Wearable,Watch Fit,Lark2智能表,ACME Watch Fit 9 SE v4,wearable
+Wearable,Band,Heron2智能表,ACME Band 10 Pro v1,wearable
+Wearable,Watch Fit,Strix2智能表,ACME Watch Fit 10 Active v2,wearable
+Wearable,Band,Taiga2智能表,ACME Band 10 v3,wearable
+Wearable,Watch Fit,Rigel2智能表,ACME Watch Fit 10 SE v4,wearable
+Wearable,Band,Talos3智能表,ACME Band 11 Pro v1,wearable
+Wearable,Watch Fit,Vireo3智能表,ACME Watch Fit 11 Active v2,wearable
+Wearable,Band,Nerio3智能表,ACME Band 11 v3,wearable
+Wearable,Watch Fit,Lark3智能表,ACME Watch Fit 11 SE v4,wearable
+Wearable,Band,Heron3智能表,ACME Band 12 Pro v1,wearable
+Wearable,Watch Fit,Strix3智能表,ACME Watch Fit 12 Active v2,wearable
+Wearable,Band,Taiga3智能表,ACME Band 12 v3,wearable
+Wearable,Watch Fit,Rigel3智能表,ACME Watch Fit 12 SE v4,wearable
+Wearable,Band,Talos4智能表,ACME Band 13 Pro v1,wearable
+Wearable,Watch Fit,Vireo4智能表,ACME Watch Fit 13 Active v2,wearable
+Wearable,Band,Nerio4智能表,ACME Band 13 v3,wearable
+Wearable,Watch Fit,Lark4智能表,ACME Watch Fit 13 SE v4,wearable
+Wearable,Band,Heron4智能表,ACME Band 14 Pro v1,wearable
+Wearable,Watch Fit,Strix4智能表,ACME Watch Fit 14 Active v2,wearable
+Wearable,Band,Taiga4智能表,ACME Band 14 v3,wearable
+Wearable,Watch Fit,Rigel4智能表,ACME Watch Fit 14 SE v4,wearable
+Phone,Nimbus,NimbusP1,ACME Nimbus 60,phone
+Phone,Vega,VegaP2,ACME Vega 61 Pro,phone
+Phone,Nimbus,NimbusP3,ACME Nimbus 62 Lite,phone
+Phone,Vega,VegaP4,ACME Vega 63 Max,phone
+Phone,Nimbus,NimbusP5,ACME Nimbus 64,phone
+Phone,Vega,VegaP6,ACME Vega 65 Pro,phone
+Phone,Nimbus,NimbusP7,ACME Nimbus 66 Lite,phone
+Phone,Vega,VegaP8,ACME Vega 67 Max,phone
+Phone,Nimbus,NimbusP9,ACME Nimbus 68,phone
+Phone,Vega,VegaP10,ACME Vega 69 Pro,phone
+Phone,Nimbus,NimbusP11,ACME Nimbus 70 Lite,phone
+Phone,Vega,VegaP12,ACME Vega 71 Max,phone
+Phone,Nimbus,NimbusP13,ACME Nimbus 72,phone
+Phone,Vega,VegaP14,ACME Vega 73 Pro,phone
+Phone,Nimbus,NimbusP15,ACME Nimbus 74 Lite,phone
+Phone,Vega,VegaP16,ACME Vega 75 Max,phone
+Phone,Nimbus,NimbusP17,ACME Nimbus 76,phone
+Phone,Vega,VegaP18,ACME Vega 77 Pro,phone
+Phone,Nimbus,NimbusP19,ACME Nimbus 78 Lite,phone
+Phone,Vega,VegaP20,ACME Vega 79 Max,phone
+Phone,Nimbus,NimbusP21,ACME Nimbus 80,phone
+Phone,Vega,VegaP22,ACME Vega 81 Pro,phone
+Audio,SonicArc,MantaA1,ACME SonicArc 1,audio
+Audio,SonicBuds,CoralA2,ACME SonicBuds 2 Pro,audio
+Audio,SonicBuds,TangoA3,ACME SonicBuds 3 SE,audio
+Audio,SonicArc,MikaA4,ACME SonicArc 4i,audio
+Audio,SonicBuds,MantaA5,ACME SonicBuds 5,audio
+Audio,SonicBuds,CoralA6,ACME SonicBuds 6 Pro,audio
+Audio,SonicArc,TangoA7,ACME SonicArc 7 SE,audio
+Audio,SonicBuds,MikaA8,ACME SonicBuds 8i,audio
+Audio,SonicBuds,MantaA9,ACME SonicBuds 9,audio
+Audio,SonicArc,CoralA10,ACME SonicArc 10 Pro,audio
+Audio,SonicBuds,TangoA11,ACME SonicBuds 11 SE,audio
+Audio,SonicBuds,MikaA12,ACME SonicBuds 12i,audio
+Audio,SonicArc,MantaA13,ACME SonicArc 13,audio
+Audio,SonicBuds,CoralA14,ACME SonicBuds 14 Pro,audio
+Audio,SonicBuds,TangoA15,ACME SonicBuds 15 SE,audio
+Audio,SonicArc,MikaA16,ACME SonicArc 16i,audio
+Audio,SonicBuds,MantaA17,ACME SonicBuds 17,audio
+Audio,SonicBuds,CoralA18,ACME SonicBuds 18 Pro,audio
+Audio,SonicArc,TangoA19,ACME SonicArc 19 SE,audio
+Audio,SonicBuds,MikaA20,ACME SonicBuds 20i,audio
+Audio,SonicBuds,MantaA21,ACME SonicBuds 21,audio
+Audio,SonicArc,CoralA22,ACME SonicArc 22 Pro,audio
+Audio,SonicBuds,TangoA23,ACME SonicBuds 23 SE,audio
+Audio,SonicBuds,MikaA24,ACME SonicBuds 24i,audio
+Audio,SonicArc,MantaA25,ACME SonicArc 25,audio
+Audio,SonicBuds,CoralA26,ACME SonicBuds 26 Pro,audio
+Tablet,Slate Tab,Vantor6T1,ACME Slate 10 2024 R1,tablet
+Tablet,Slate Tab,TovikT2,ACME Slate 11 Pro 2024 R2,tablet
+Tablet,Slate Tab,EverestT3,ACME Slate 12 Air 2024 R3,tablet
+Tablet,Slate Tab,QuantaT4,ACME Slate 13 SE 2024 R4,tablet
+Tablet,Slate Tab,Vantor6T5,ACME Slate 14 2024 R5,tablet
+Tablet,Slate Tab,TovikT6,ACME Slate 10 Pro 2024 R6,tablet
+Tablet,Slate Tab,EverestT7,ACME Slate 11 Air 2024 R7,tablet
+Tablet,Slate Tab,QuantaT8,ACME Slate 12 SE 2024 R8,tablet
+Tablet,Slate Tab,Vantor6T9,ACME Slate 13 2024 R9,tablet
+Tablet,Slate Tab,TovikT10,ACME Slate 14 Pro 2024 R10,tablet
+Tablet,Slate Tab,EverestT11,ACME Slate 10 Air 2024 R11,tablet
+Tablet,Slate Tab,QuantaT12,ACME Slate 11 SE 2024 R12,tablet
+Tablet,Slate Tab,Vantor6T13,ACME Slate 12 2024 R13,tablet
+Tablet,Slate Tab,TovikT14,ACME Slate 13 Pro 2024 R14,tablet
+Tablet,Slate Tab,EverestT15,ACME Slate 14 Air 2024 R15,tablet
+Tablet,Slate Tab,QuantaT16,ACME Slate 10 SE 2024 R16,tablet
+Tablet,Slate Tab,Vantor6T17,ACME Slate 11 2024 R17,tablet
+Tablet,Slate Tab,TovikT18,ACME Slate 12 Pro 2024 R18,tablet
+PC,AceBook,AlphaPC1,AceBook 14 2024 R1 Intel,pc
+PC,AceBook,BetaQC2,AceBook 15 2024 R2 Intel,pc
+PC,AceBook,GammaRC3,AceBook 16 2024 R3 Intel,pc
+PC,AceBook,AlphaPC4,AceBook X 2024 R4 Intel,pc
+PC,AceBook,BetaQC5,AceBook 14 2024 R5 Intel,pc
+PC,AceBook,GammaRC6,AceBook 15 2024 R6 Intel,pc
+PC,AceBook,AlphaPC7,AceBook 16 2024 R7 Intel,pc
+PC,AceBook,BetaQC8,AceBook X 2024 R8 Intel,pc
+PC,AceBook,GammaRC9,AceBook 14 2024 R9 Intel,pc
+PC,AceBook,AlphaPC10,AceBook 15 2024 R10 Intel,pc
+PC,AceBook,BetaQC11,AceBook 16 2024 R11 Intel,pc
+PC,AceBook,GammaRC12,AceBook X 2024 R12 Intel,pc

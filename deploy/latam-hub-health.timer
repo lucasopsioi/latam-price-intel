@@ -1,0 +1,13 @@
+[Unit]
+Description=每 60 秒跑一次拉美竞品情报中枢健康探针
+
+[Timer]
+# 开机后等 2 分钟再开始探 —— 给服务留出建库/迁移的启动时间，
+# 否则冷启动阶段会连吃 3 次失败然后把刚起来的服务重启掉。
+OnBootSec=120
+OnUnitActiveSec=60
+AccuracySec=5s
+Unit=latam-hub-health.service
+
+[Install]
+WantedBy=timers.target

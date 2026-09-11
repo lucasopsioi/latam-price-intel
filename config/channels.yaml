@@ -1,0 +1,626 @@
+# ============================================================
+# 国家 / 渠道 配置
+#
+# search_url 里的 {q} 会被替换成搜索词（已 URL 编码）。
+# adapter: app/scraping/channels/ 下的适配器名；generic = 通用三级抽取
+#          （JSON-LD → 站点选择器 → LLM 文本兜底）
+# default_seller_type:
+#   official    自营/官方（零售商自营、品牌官网、运营商）→ 价格可直接进分析
+#   third_party 第三方卖家为主（marketplace）→ 必须过价格审计 Agent
+#
+# ★ URL 会随站点改版失效。跑 `python main.py doctor` 做体检（可加
+#   --country MX / --channel liverpool / --limit 3 缩小范围），
+#   失效的会明确报出来，不会静默变成"这个渠道今天没数据"。
+# ============================================================
+
+countries:
+  MX:
+    name_zh: 墨西哥
+    name_local: México
+    currency: MXN
+    lang: es
+    locale: es-MX
+    timezone: America/Mexico_City
+    meli_site: MLM
+    meli_domain: mercadolibre.com.mx
+    sort_order: 1
+  BR:
+    name_zh: 巴西
+    name_local: Brasil
+    currency: BRL
+    lang: pt
+    locale: pt-BR
+    timezone: America/Sao_Paulo
+    meli_site: MLB
+    meli_domain: mercadolivre.com.br
+    sort_order: 2
+    # ★ 用户 2026-08-11 明确：BR/AR 不做竞品对照。
+    #   原因：Acme在这两国**没有自营商城**（/br/offer/、/ar/offer/ 都不存在），
+    #   拿不到官方定价 ⇒ 算不出「Acme vs 友商」的价差。
+    #   ★ 这是**口径决定**，不是数据缺口 —— 两者必须分开：
+    #     BR/AR 无我方价 = 按口径就该没有，不要报警、不要当待办；
+    #     MX/CO/CL/PE 无我方价 = 真出问题了（商城没抓到），必须报警。
+    #   友商价照常抓：竞争动态看板、价格变动、周报、VOC 对这两国全部照常工作。
+    own_pricing: false
+  CO:
+    name_zh: 哥伦比亚
+    name_local: Colombia
+    currency: COP
+    lang: es
+    locale: es-CO
+    timezone: America/Bogota
+    meli_site: MCO
+    meli_domain: mercadolibre.com.co
+    sort_order: 3
+  CL:
+    name_zh: 智利
+    name_local: Chile
+    currency: CLP
+    lang: es
+    locale: es-CL
+    timezone: America/Santiago
+    meli_site: MLC
+    meli_domain: mercadolibre.cl
+    sort_order: 4
+  PE:
+    name_zh: 秘鲁
+    name_local: Perú
+    currency: PEN
+    lang: es
+    locale: es-PE
+    timezone: America/Lima
+    meli_site: MPE
+    meli_domain: mercadolibre.com.pe
+    sort_order: 5
+  AR:
+    name_zh: 阿根廷
+    name_local: Argentina
+    currency: ARS
+    lang: es
+    locale: es-AR
+    timezone: America/Argentina/Buenos_Aires
+    meli_site: MLA
+    meli_domain: mercadolibre.com.ar
+    sort_order: 6
+    # ★ 用户 2026-08-11 明确：BR/AR 不做竞品对照。
+    #   原因：Acme在这两国**没有自营商城**（/br/offer/、/ar/offer/ 都不存在），
+    #   拿不到官方定价 ⇒ 算不出「Acme vs 友商」的价差。
+    #   ★ 这是**口径决定**，不是数据缺口 —— 两者必须分开：
+    #     BR/AR 无我方价 = 按口径就该没有，不要报警、不要当待办；
+    #     MX/CO/CL/PE 无我方价 = 真出问题了（商城没抓到），必须报警。
+    #   友商价照常抓：竞争动态看板、价格变动、周报、VOC 对这两国全部照常工作。
+    own_pricing: false
+
+channels:
+
+  # ---------------- 墨西哥 ----------------
+  - code: liverpool
+    country: MX
+    name: Liverpool
+    kind: retailer
+    base_url: "https://www.liverpool.com.mx"
+    search_url: "https://www.liverpool.com.mx/tienda?s={q}"
+    adapter: liverpool
+    default_seller_type: official
+    priority: 10
+    # 2026-08-10 实测：Playwright 冷却换设备重试两次仍被人机验证拦死；
+    # Selenium(undetected) 一次通过，解析出 56 条真实商品。
+    # （这是把 Selenium 定为主引擎的直接依据，见 app/config.py）
+  - code: coppel
+    country: MX
+    name: Coppel
+    kind: retailer
+    base_url: "https://www.coppel.com"
+    # ★ Coppel 没有可用的站内搜索：/search、/s、/busqueda、/?q= 全部
+    #   返回 "Página no encontrada"（404）或首页推荐位（床垫、工作靴）。
+    #   真实结构是品类页 /ct/<slug>/<catId>，实测手机品类：
+    #   手机词 59、杂项 2、价格串 90 → 可用。
+    #   所以走 category_page 模式（与 Samsung 官网同一机制）。
+    search_url: "https://www.coppel.com/ct/celulares/cat000001"
+    category_urls:
+      phone: "https://www.coppel.com/ct/celulares/cat000001"
+    adapter: coppel
+    default_seller_type: official
+    priority: 20
+    notes: "2026-08-10 实测：站内搜索路径全部 404 或返回推荐位，改用品类页。
+      其余品类的 catId 待补（在首页导航里能找到 /ct/<slug>/<catId> 形式）。"
+  - code: sears
+    country: MX
+    name: Sears México
+    kind: retailer
+    base_url: "https://www.sears.com.mx"
+    # ★ 2026-08-10 两步定位到根因，两处都错：路径错 + 参数名错。
+    #   /busca/?q=…          → 13KB 空壳，0 价格（看起来像"该渠道没货"）
+    #   /resultados/?q=…     → 前端 JS 报 "Application error"，并自己追加
+    #                          `query=undefined` —— 这是在说参数名不对
+    #   /resultados?query=…  → ★手机词 204、价格串 192  ← 正确
+    search_url: "https://www.sears.com.mx/resultados?query={q}"
+    adapter: sears
+    default_seller_type: official
+    priority: 30
+    notes: "2026-08-10 实测：返回 HTML 仅 31KB、0 价格 0 JSON-LD，是 SPA 空壳。
+      与 Sanborns 同属 Grupo Sanborns，站点结构相同，共用适配器。"
+  - code: sanborns
+    country: MX
+    name: Sanborns
+    kind: retailer
+    base_url: "https://www.sanborns.com.mx"
+    # 与 Sears 同属 Grupo Sanborns，站点结构相同，参数名同为 query
+    # 实测（2026-08-10）：手机词 166、价格串 197
+    search_url: "https://www.sanborns.com.mx/resultados?query={q}"
+    adapter: sanborns
+    default_seller_type: official
+    priority: 40
+    notes: "2026-08-10 实测：Playwright 被人机验证拦死；Selenium 能打开但返回 33KB
+      空壳（0 条）。URL 形态待确认。"
+  - code: amazon
+    country: MX
+    name: Amazon México
+    kind: marketplace
+    base_url: "https://www.amazon.com.mx"
+    search_url: "https://www.amazon.com.mx/s?k={q}"
+    adapter: amazon
+    # ★★ 2026-08-12 停用：amazon.com.br / amazon.com.mx 的 robots.txt
+    #   **点名**禁止本 agent 全站访问：
+    #       User-agent: ClaudeBot    → Disallow: /
+    #       User-agent: Claude-Web   → Disallow: /
+    #       User-agent: Claude-User  → Disallow: /
+    #   站方对我们这类 agent 明确说了不。继续抓就得把自己伪装成别的东西 ——
+    #   那是欺骗，本项目不做（与 versus.com 同一条线）。
+    #   要恢复只有两条正路：申请 Amazon 官方 Product Advertising API，
+    #   或由用户本人以自己的身份取数。**不要靠改 User-Agent 绕过**。
+    #   复查方式：python tools/check_robots.py（robots 会变，建议每月一次）
+    enabled: 0
+    default_seller_type: unknown
+    priority: 15
+  # ★★ Acme自家官方商城 —— 我方的官方定价基准。
+  #   用户 2026-08-11 明确指出：「商城的价格就是官方定价」，
+  #   所以不再要求手工录入 my_pricing，直接抓。
+  #   实测（2026-08-11）：/{cc}/phones/ 是产品介绍页**不带价**，
+  #   /{cc}/offer/ 才是商城（MX 826 个价格串 / CO 208 / PE 153 / CL 81）。
+  #   BR 与 AR 没有 offer 页（Acme在这两国无自营商城），只能从零售渠道取价。
+  #
+  # ★ adapter: acme_store —— 必须用专用适配器，不能用 generic。
+  #   通用解析器在这四个站上抓到的是**分期月供**：智利 Astra X7 记成
+  #   183,333 CLP（×12 期才是 2,199,990 的真实价），秘鲁墨西哥同样中招。
+  #   专用适配器改读页面内嵌 JSON，那里 installmentAmount 与总价是分开的字段。
+  #
+  # ★ 下面四个 category_urls **指向同一个页面**（一页混着手机/平板/手表/耳机）。
+  #   所以每国只需跑**一个**采集单元，按品类跑 4 遍是把同一个 2MB 页面抓 4 次；
+  #   品类由适配器从型号名推断，不用采集上下文。
+  - code: acme_store
+    country: MX
+    name: Acme商城 MX
+    kind: brand_store
+    base_url: "https://consumer.acme.com/mx"
+    search_url: "https://consumer.acme.com/mx/offer/"
+    category_urls:
+      phone: "https://consumer.acme.com/mx/offer/"
+      tablet: "https://consumer.acme.com/mx/offer/"
+      wearable: "https://consumer.acme.com/mx/offer/"
+      audio: "https://consumer.acme.com/mx/offer/"
+    adapter: acme_store
+    default_seller_type: official
+    priority: 5
+  - code: meli
+    country: MX
+    name: MercadoLibre México
+    kind: marketplace
+    base_url: "https://www.mercadolibre.com.mx"
+    search_url: "https://listado.mercadolibre.com.mx/{q}"
+    adapter: meli
+    default_seller_type: unknown
+    priority: 5
+    # ★ 2026-08-17 停用：robots.txt 用多组 User-agent 共用 Disallow: / 的写法
+    #   点名封禁我们这类代理，且用户 2026-08-11 明示先不做 MercadoLibre。
+    #   ★★ 必须在**这里**关而不是在库里关 —— db.seed() 的
+    #   `ON CONFLICT ... DO UPDATE SET enabled=excluded.enabled`
+    #   每次 init_db() 都会用本文件覆盖库里的 enabled，
+    #   在库里（或界面上）关掉的渠道下次 init 就复活了。
+    enabled: 0
+  # ★ 品牌官方商城：站内搜索页抓不到东西，但品类页带完整 JSON-LD。
+  #   2026-08-10 实测 samsung.com/mx 品类页有 10 个 JSON-LD Product
+  #   （Z Fold8 45999 / Z Fold8 Ultra 50999 / Z Flip8 30499），搜索页 0 个。
+  - code: samsung_store
+    country: MX
+    name: Samsung Shop México
+    kind: brand_store
+    base_url: "https://www.samsung.com/mx"
+    search_url: "https://www.samsung.com/mx/search/?searchvalue={q}"
+    category_urls:
+      phone: "https://www.samsung.com/mx/smartphones/all-smartphones/"
+      tablet: "https://www.samsung.com/mx/tablets/all-tablets/"
+      wearable: "https://www.samsung.com/mx/watches/all-watches/"
+      audio: "https://www.samsung.com/mx/audio-sound/all-audio-sound/"
+      pc: "https://www.samsung.com/mx/computers/all-computers/"
+    adapter: samsung
+    default_seller_type: official
+    priority: 50
+  - code: apple_store
+    country: MX
+    name: Apple Store México
+    kind: brand_store
+    base_url: "https://www.apple.com/mx"
+    search_url: "https://www.apple.com/mx/search/{q}"
+    category_urls:
+      phone: "https://www.apple.com/mx/shop/buy-iphone"
+      tablet: "https://www.apple.com/mx/shop/buy-ipad"
+      wearable: "https://www.apple.com/mx/shop/buy-watch"
+      audio: "https://www.apple.com/mx/shop/buy-airpods"
+      pc: "https://www.apple.com/mx/shop/buy-mac"
+    adapter: apple
+    default_seller_type: official
+    priority: 50
+    notes: "2026-08-10 实测：品类页 0 个 JSON-LD，可见文本有 23 个价格串，
+      混着 24 期分期月供（$1,583.28）。专用适配器用「同一卡片内取最大价」
+      + 分期上下文剔除来区分整机价与月供。"
+
+  # ---------------- 哥伦比亚 ----------------
+  - code: claro
+    country: CO
+    name: Claro Colombia
+    kind: carrier
+    base_url: "https://tienda.claro.com.co"
+    # ★ 2026-08-11 实测：旧的 /catalogsearch/result/?q= 是 **Magento 路径，
+    #   此站根本没有** —— 站点是 Next.js SPA，把它渲染成西语 404 页
+    #   （正文 158 字符），而 <title> 是全站写死的静态标题。
+    #   所以「标题正确 + 0 价格」看着像 JS 没渲染完，实际是走进死路径，
+    #   连一次搜索请求都没发出去。真实搜索路由是 /results?searchTerm=。
+    #   但 DOM 路线也不可用：卡片内没有 a[href]（"Ver producto" 是 JS 路由按钮），
+    #   通用解析器 0 条；品类页只解出 4/24 且含标题/价格/URL 错配。
+    #   ∴ 走站点自带的无鉴权 JSON 接口（裸 requests 即 200），见 ClaroCoAdapter。
+    #   接口地址写在适配器里 —— channels.yaml 的加载器只认固定列，
+    #   自定义键会被静默丢弃。
+    search_url: "https://tienda.claro.com.co/results?searchTerm={q}"
+    adapter: claro_co
+    default_seller_type: official
+    priority: 10
+  - code: alkosto
+    country: CO
+    name: Alkosto
+    kind: retailer
+    base_url: "https://www.alkosto.com"
+    # ★ 体检曾报 irrelevant「搜索没生效，必须修 search_url」—— **那是误判**。
+    #   实测 search?text= 完全正常：110 个价格、88 处手机词、80 个商品链接。
+    #   真正的问题是通用解析器只认出 4/80 条，而那 4 条恰好是边角推荐位，
+    #   相关率 25% 触发了整批作废。已加低产率检测把这两种故障分开报。
+    #   品类页比搜索页更全（132 价 / 91 链接），优先走它。
+    # ★★ 2026-08-11 定案（两名工程师独立复现）：**别再解析 HTML 了**。
+    #   站点是 Hybris，但商品网格是前端 Algolia InstantSearch 渲染的，
+    #   服务端只预渲染 4 个商品 —— 这就是"只认出 4/80"的真正原因，
+    #   不是选择器不好，是 HTML 里根本没有那 76 条。
+    #   改走 Algolia 索引（页面 JS 里公开内嵌 search-only key）：
+    #   手机品类 facet allcategories_string_mv:BI_101_ALKOS = 466 个商品。
+    #   category_urls 保留：适配器从 URL 尾部的 /c/{码} 直接取 facet 值。
+    search_url: "https://www.alkosto.com/search?text={q}"
+    category_urls:
+      phone: "https://www.alkosto.com/celulares/c/BI_101_ALKOS"
+    adapter: alkosto
+    default_seller_type: official
+    priority: 20
+  # ★★ Acme自家官方商城 —— 我方的官方定价基准。
+  #   用户 2026-08-11 明确指出：「商城的价格就是官方定价」，
+  #   所以不再要求手工录入 my_pricing，直接抓。
+  #   实测（2026-08-11）：/{cc}/phones/ 是产品介绍页**不带价**，
+  #   /{cc}/offer/ 才是商城（MX 826 个价格串 / CO 208 / PE 153 / CL 81）。
+  #   BR 与 AR 没有 offer 页（Acme在这两国无自营商城），只能从零售渠道取价。
+  - code: acme_store
+    country: CO
+    name: Acme商城 CO
+    kind: brand_store
+    base_url: "https://consumer.acme.com/co"
+    search_url: "https://consumer.acme.com/co/offer/"
+    category_urls:
+      phone: "https://consumer.acme.com/co/offer/"
+      tablet: "https://consumer.acme.com/co/offer/"
+      wearable: "https://consumer.acme.com/co/offer/"
+      audio: "https://consumer.acme.com/co/offer/"
+    adapter: acme_store
+    default_seller_type: official
+    priority: 5
+  - code: meli
+    country: CO
+    name: MercadoLibre Colombia
+    kind: marketplace
+    base_url: "https://www.mercadolibre.com.co"
+    search_url: "https://listado.mercadolibre.com.co/{q}"
+    adapter: meli
+    default_seller_type: unknown
+    priority: 5
+    # ★ 2026-08-17 停用：robots.txt 用多组 User-agent 共用 Disallow: / 的写法
+    #   点名封禁我们这类代理，且用户 2026-08-11 明示先不做 MercadoLibre。
+    #   ★★ 必须在**这里**关而不是在库里关 —— db.seed() 的
+    #   `ON CONFLICT ... DO UPDATE SET enabled=excluded.enabled`
+    #   每次 init_db() 都会用本文件覆盖库里的 enabled，
+    #   在库里（或界面上）关掉的渠道下次 init 就复活了。
+    enabled: 0
+  - code: falabella
+    country: CO
+    name: Falabella Colombia
+    kind: retailer
+    base_url: "https://www.falabella.com.co"
+    search_url: "https://www.falabella.com.co/falabella-co/search?Ntt={q}"
+    adapter: falabella
+    default_seller_type: unknown
+    priority: 15
+
+  # ---------------- 智利 ----------------
+  - code: falabella
+    country: CL
+    name: Falabella Chile
+    kind: retailer
+    base_url: "https://www.falabella.com"
+    search_url: "https://www.falabella.com/falabella-cl/search?Ntt={q}"
+    adapter: falabella
+    default_seller_type: unknown
+    priority: 10
+  - code: ripley
+    country: CL
+    name: Ripley Chile
+    kind: retailer
+    base_url: "https://simple.ripley.cl"
+    search_url: "https://simple.ripley.cl/search/{q}"
+    adapter: ripley
+    default_seller_type: unknown
+    priority: 20
+  - code: paris
+    country: CL
+    name: Paris.cl
+    kind: retailer
+    base_url: "https://www.paris.cl"
+    search_url: "https://www.paris.cl/search/?q={q}"
+    adapter: generic
+    default_seller_type: official
+    priority: 30
+  # ★★ Acme自家官方商城 —— 我方的官方定价基准。
+  #   用户 2026-08-11 明确指出：「商城的价格就是官方定价」，
+  #   所以不再要求手工录入 my_pricing，直接抓。
+  #   实测（2026-08-11）：/{cc}/phones/ 是产品介绍页**不带价**，
+  #   /{cc}/offer/ 才是商城（MX 826 个价格串 / CO 208 / PE 153 / CL 81）。
+  #   BR 与 AR 没有 offer 页（Acme在这两国无自营商城），只能从零售渠道取价。
+  - code: acme_store
+    country: CL
+    name: Acme商城 CL
+    kind: brand_store
+    base_url: "https://consumer.acme.com/cl"
+    search_url: "https://consumer.acme.com/cl/offer/"
+    category_urls:
+      phone: "https://consumer.acme.com/cl/offer/"
+      tablet: "https://consumer.acme.com/cl/offer/"
+      wearable: "https://consumer.acme.com/cl/offer/"
+      audio: "https://consumer.acme.com/cl/offer/"
+    adapter: acme_store
+    default_seller_type: official
+    priority: 5
+  - code: meli
+    country: CL
+    name: MercadoLibre Chile
+    kind: marketplace
+    base_url: "https://www.mercadolibre.cl"
+    search_url: "https://listado.mercadolibre.cl/{q}"
+    adapter: meli
+    default_seller_type: unknown
+    priority: 5
+    # ★ 2026-08-17 停用：robots.txt 用多组 User-agent 共用 Disallow: / 的写法
+    #   点名封禁我们这类代理，且用户 2026-08-11 明示先不做 MercadoLibre。
+    #   ★★ 必须在**这里**关而不是在库里关 —— db.seed() 的
+    #   `ON CONFLICT ... DO UPDATE SET enabled=excluded.enabled`
+    #   每次 init_db() 都会用本文件覆盖库里的 enabled，
+    #   在库里（或界面上）关掉的渠道下次 init 就复活了。
+    enabled: 0
+  - code: entel
+    country: CL
+    name: Entel Chile
+    kind: carrier
+    # ★ 2026-08-11 实测根因：**配的是错的域名**。
+    #   www.entel.cl 在 Cloudflare 后面，只有资费/客服内容，
+    #   整个 /tienda/* 路径不存在 —— 换任何参数名都是 404。
+    #   真正的电商站是子域 miportal.entel.cl（Oracle Commerce/Endeca）。
+    #   base_url 必须一起改：seoUrl 是相对路径，不改会拼出死链。
+    base_url: "https://miportal.entel.cl"
+    # Ntt 是 Endeca 的站内搜索参数，按品类路径生效；Nrpp 是每页条数（可到 200）
+    search_url: "https://miportal.entel.cl/personas/catalogo/celulares?Ntt={q}&Nrpp=48"
+    category_urls:
+      phone: "https://miportal.entel.cl/personas/catalogo/celulares?Nrpp=200"
+    adapter: entel_cl
+    default_seller_type: official
+    priority: 40
+  - code: amazon
+    country: CL
+    name: Amazon (跨境发智利)
+    kind: marketplace
+    base_url: "https://www.amazon.com"
+    search_url: "https://www.amazon.com/s?k={q}"
+    adapter: amazon
+    default_seller_type: unknown
+    priority: 90
+    enabled: 0
+    notes: "亚马逊无智利本地站，只有 amazon.com 跨境。价格为 USD 且含跨境税费，与本地渠道不可直接比价，默认关闭；要开就单独看。"
+
+  # ---------------- 秘鲁 ----------------
+  - code: hiraoka
+    country: PE
+    name: Hiraoka
+    kind: retailer
+    base_url: "https://hiraoka.com.pe"
+    search_url: "https://hiraoka.com.pe/catalogsearch/result/?q={q}"
+    adapter: generic
+    default_seller_type: official
+    priority: 10
+  - code: falabella
+    country: PE
+    name: Falabella Perú
+    kind: retailer
+    base_url: "https://www.falabella.com.pe"
+    search_url: "https://www.falabella.com.pe/falabella-pe/search?Ntt={q}"
+    adapter: falabella
+    default_seller_type: unknown
+    priority: 20
+  - code: ripley
+    country: PE
+    name: Ripley Perú
+    kind: retailer
+    base_url: "https://simple.ripley.com.pe"
+    # ★ 2026-08-11 独立复验，更正此前两个判断：
+    #   ① 不是 Imperva/Incapsula，是 **Cloudflare**
+    #      （响应头 server: cloudflare、cf-mitigated: challenge、页内 window._cf_chl_opt）。
+    #   ② 也不是选择器坏了 —— /search/{q} 路径完全正确，返回 HTTP 403 挑战页，
+    #      连 /robots.txt 都是 403，整站边缘拦截，没有可绕开的 JSON 接口。
+    #   为什么智利站好好的、秘鲁站不行 —— 挑战**等级不同**：
+    #      CL: _cf_chl_opt.cType='non-interactive'（纯 JS 挑战，真实浏览器几秒自动过）
+    #      PE: _cf_chl_opt.cType='managed'（Managed Challenge，可升级为需真人点 Turnstile）
+    #   **不能假设跨国同构**：同一品牌不同国家站点的防护等级可能完全不同。
+    #   处置：本项目不做任何绕过验证的事。要开通只能由**用户本人**用
+    #        tools/site_login.py 在可见浏览器里过一次验证，系统复用其 cookie。
+    #   渠道保持 enabled（用户要求渠道不许关），体检会如实报"被挑战拦截"。
+    search_url: "https://simple.ripley.com.pe/search/{q}"
+    adapter: ripley
+    extra_wait: 14
+    default_seller_type: unknown
+    priority: 30
+  # ★★ Acme自家官方商城 —— 我方的官方定价基准。
+  #   用户 2026-08-11 明确指出：「商城的价格就是官方定价」，
+  #   所以不再要求手工录入 my_pricing，直接抓。
+  #   实测（2026-08-11）：/{cc}/phones/ 是产品介绍页**不带价**，
+  #   /{cc}/offer/ 才是商城（MX 826 个价格串 / CO 208 / PE 153 / CL 81）。
+  #   BR 与 AR 没有 offer 页（Acme在这两国无自营商城），只能从零售渠道取价。
+  - code: acme_store
+    country: PE
+    name: Acme商城 PE
+    kind: brand_store
+    base_url: "https://consumer.acme.com/pe"
+    search_url: "https://consumer.acme.com/pe/offer/"
+    category_urls:
+      phone: "https://consumer.acme.com/pe/offer/"
+      tablet: "https://consumer.acme.com/pe/offer/"
+      wearable: "https://consumer.acme.com/pe/offer/"
+      audio: "https://consumer.acme.com/pe/offer/"
+    adapter: acme_store
+    default_seller_type: official
+    priority: 5
+  - code: meli
+    country: PE
+    name: MercadoLibre Perú
+    kind: marketplace
+    base_url: "https://www.mercadolibre.com.pe"
+    search_url: "https://listado.mercadolibre.com.pe/{q}"
+    adapter: meli
+    default_seller_type: unknown
+    priority: 15
+    # ★ 2026-08-17 停用：robots.txt 用多组 User-agent 共用 Disallow: / 的写法
+    #   点名封禁我们这类代理，且用户 2026-08-11 明示先不做 MercadoLibre。
+    #   ★★ 必须在**这里**关而不是在库里关 —— db.seed() 的
+    #   `ON CONFLICT ... DO UPDATE SET enabled=excluded.enabled`
+    #   每次 init_db() 都会用本文件覆盖库里的 enabled，
+    #   在库里（或界面上）关掉的渠道下次 init 就复活了。
+    enabled: 0
+
+  # ---------------- 阿根廷 ----------------
+  - code: meli
+    country: AR
+    name: MercadoLibre Argentina
+    kind: marketplace
+    base_url: "https://www.mercadolibre.com.ar"
+    search_url: "https://listado.mercadolibre.com.ar/{q}"
+    adapter: meli
+    default_seller_type: unknown
+    priority: 5
+    # ★ 2026-08-17 停用：robots.txt 用多组 User-agent 共用 Disallow: / 的写法
+    #   点名封禁我们这类代理，且用户 2026-08-11 明示先不做 MercadoLibre。
+    #   ★★ 必须在**这里**关而不是在库里关 —— db.seed() 的
+    #   `ON CONFLICT ... DO UPDATE SET enabled=excluded.enabled`
+    #   每次 init_db() 都会用本文件覆盖库里的 enabled，
+    #   在库里（或界面上）关掉的渠道下次 init 就复活了。
+    enabled: 0
+
+  # ---------------- 巴西 ----------------
+  - code: shopee
+    country: BR
+    name: Shopee Brasil
+    kind: marketplace
+    base_url: "https://shopee.com.br"
+    search_url: "https://shopee.com.br/search?keyword={q}"
+    adapter: shopee
+    default_seller_type: unknown
+    priority: 10
+    # ★ 2026-08-11 实测：**不是 SPA 慢渲染，是 Shopee 的流量验证闸**。
+    #   所有入口（首页/搜索/品类/mall）都被 SPA 主动跳到
+    #   /verify/traffic/error?...&is_logged_in=false，正文只有 313~482 字节
+    #   「Login Necessário」。数据接口 /api/v4/search/search_items 返回
+    #   error=90309999（反欺诈请求头校验失败）+ is_login=false。
+    #   逐项排除过：等 60 秒无用（正文恒 482 字节）、全新 profile 无用、
+    #   有头模式无用（navigator.webdriver=false 仍被拦）、m.shopee.com.br 是 NXDOMAIN。
+    #   → 先关掉，避免每轮白跑还伪装成"今天没数据"。
+    #     要开需先登录一个真实账号并复用会话（tools/site_login.py shopee_br）。
+    # ★★ 2026-08-11 独立复验，结论加强为「无公开可读路径」，可以不用再试了：
+    #   决定性证据 —— 四个完全不同的路由（/、/search?keyword=notebook、
+    #   /sitemap.xml、商品详情页式路径）返回的 HTML **字节完全相同**
+    #   （MD5 均为 38550e06da350f5528de2e054bd25cc4，155433 字节）。
+    #   即源站对任何 URL 都只吐同一个与路由无关的静态 SPA 骨架：
+    #   服务端零渲染、无 JSON-LD、无价格、无 __INITIAL_STATE__。
+    #   三条"不碰验证闸"的公开备选路线全部堵死：
+    #     robots.txt 里没有 Sitemap 指令；/sitemap.xml 返回的是那个骨架不是 XML；
+    #     m.shopee.com.br 是 NXDOMAIN。
+    #   → 保持 disabled。正规开通路径是申请 Shopee 官方开放平台/联盟 API 凭证，
+    #     而不是想办法绕过流量验证闸（本项目不做这件事）。
+    enabled: 0
+  - code: meli
+    country: BR
+    name: Mercado Livre Brasil
+    kind: marketplace
+    base_url: "https://www.mercadolivre.com.br"
+    search_url: "https://lista.mercadolivre.com.br/{q}"
+    adapter: meli
+    default_seller_type: unknown
+    priority: 5
+    # ★ 2026-08-17 停用：robots.txt 用多组 User-agent 共用 Disallow: / 的写法
+    #   点名封禁我们这类代理，且用户 2026-08-11 明示先不做 MercadoLibre。
+    #   ★★ 必须在**这里**关而不是在库里关 —— db.seed() 的
+    #   `ON CONFLICT ... DO UPDATE SET enabled=excluded.enabled`
+    #   每次 init_db() 都会用本文件覆盖库里的 enabled，
+    #   在库里（或界面上）关掉的渠道下次 init 就复活了。
+    enabled: 0
+  - code: fastshop
+    country: BR
+    name: Fast Shop
+    kind: retailer
+    # ★ 2026-08-11 实测：www.fastshop.com.br **已整站不可达，且不是人机验证**。
+    #   Akamai 对所有路径（含 /robots.txt、/sitemap.xml）返回 301 字节静态 403
+    #   「Access Denied」，页内 0 iframe / 0 输入框 / 0 验证控件 ——
+    #   根本没有任何可供人类完成的验证，headless 与有头、三种 UA、
+    #   甚至另一条出口网络结果全都一样。所以 tools/site_login.py 对本站无效。
+    #   体检之所以报「需人机验证」，是 CAPTCHA_MARKERS 里的 "access denied"
+    #   命中了这个边缘 403（已改归 THROTTLE_MARKERS）。
+    #   真正在运营的店已迁到 site.fastshop.com.br（VTEX FastStore）。
+    # ★★ 2026-08-11 定案（独立复现）：新域名**完全可达、无任何人机验证**，
+    #   之前"empty"是因为 /s?q= 是纯客户端渲染 —— 402KB 的 HTML 里
+    #   "R$" 出现 0 次、商品卡 0 个，通用选择器天生抓不到。
+    #   站点跑在 VTEX FastStore（window.VTEX_METADATA account=fastshopbr），
+    #   改走 VTEX Intelligent Search 公开接口（免鉴权免 cookie）。
+    #   接口有个必须客户端兜住的坑：hideUnavailableItems 参数**不生效**，
+    #   翻页会返回大量 Price=0 的僵尸 SKU，适配器里已强制过滤 Price>0。
+    base_url: "https://site.fastshop.com.br"
+    search_url: "https://site.fastshop.com.br/s?q={q}"
+    adapter: vtex
+    default_seller_type: official
+    priority: 20
+  - code: amazon
+    country: BR
+    name: Amazon Brasil
+    kind: marketplace
+    base_url: "https://www.amazon.com.br"
+    search_url: "https://www.amazon.com.br/s?k={q}"
+    adapter: amazon
+    # ★★ 2026-08-12 停用：amazon.com.br / amazon.com.mx 的 robots.txt
+    #   **点名**禁止本 agent 全站访问：
+    #       User-agent: ClaudeBot    → Disallow: /
+    #       User-agent: Claude-Web   → Disallow: /
+    #       User-agent: Claude-User  → Disallow: /
+    #   站方对我们这类 agent 明确说了不。继续抓就得把自己伪装成别的东西 ——
+    #   那是欺骗，本项目不做（与 versus.com 同一条线）。
+    #   要恢复只有两条正路：申请 Amazon 官方 Product Advertising API，
+    #   或由用户本人以自己的身份取数。**不要靠改 User-Agent 绕过**。
+    #   复查方式：python tools/check_robots.py（robots 会变，建议每月一次）
+    enabled: 0
+    default_seller_type: unknown
+    priority: 15

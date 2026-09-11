@@ -1,0 +1,319 @@
+{
+  "schema": "latam-intel-sql-bundle",
+  "schemaVersion": 1,
+  "builtAt": "deterministic",
+  "studioVersion": 2,
+  "bundleHash": "bundle@1x0abe9",
+  "coldStartCutoff": "2026-08-12",
+  "plan": {
+    "dbMeta": {
+      "query": "dbMeta",
+      "params": {}
+    },
+    "dayHealth": {
+      "query": "dayHealth",
+      "params": {
+        "winStart": "$asOf-60d",
+        "winEnd": "$asOf"
+      }
+    },
+    "coverage": {
+      "query": "coverage",
+      "params": {
+        "winStart": "$cur.start",
+        "winEnd": "$cur.end"
+      }
+    },
+    "promoBoard": {
+      "query": "promoBoard",
+      "params": {
+        "winStart": "$cur.start",
+        "winEnd": "$cur.end",
+        "minRows": 20
+      }
+    },
+    "promoPrev": {
+      "query": "promoBoard",
+      "params": {
+        "winStart": "$prev.start",
+        "winEnd": "$prev.end",
+        "minRows": 20
+      }
+    },
+    "launchCards": {
+      "query": "launchCards",
+      "params": {
+        "scanSince": "$cur.start-90d",
+        "newSince": "$cur.start",
+        "newUntil": "$cur.end",
+        "limit": 120
+      }
+    },
+    "priceMoves": {
+      "query": "priceMoves",
+      "params": {
+        "winStart": "$cur.start",
+        "winEnd": "$cur.end",
+        "minPct": 2,
+        "limit": 80
+      }
+    }
+  },
+  "queries": {
+    "dbMeta": {
+      "sql": "SELECT (SELECT COUNT(*) FROM price_obs) AS price_obs_total,\n       (SELECT MAX(obs_date) FROM price_obs) AS data_as_of,\n       (SELECT MIN(obs_date) FROM price_obs) AS data_from,\n       (SELECT COUNT(*) FROM price_move) AS move_total",
+      "sqlHash": "dbMeta@dxvap9",
+      "params": [],
+      "flags": {
+        "device": false,
+        "noBundle": false,
+        "newOnly": false,
+        "auditOk": false,
+        "rivalOnly": false,
+        "priceFloor": false,
+        "accessoryWords": false
+      },
+      "readOnly": true
+    },
+    "dayHealth": {
+      "sql": "SELECT po.obs_date AS date, COUNT(*) AS n,\n       COUNT(DISTINCT po.country_code) AS n_countries,\n       COUNT(DISTINCT po.channel_id) AS n_channels\nFROM price_obs po\nWHERE po.product_kind = 'device' AND po.is_bundle = 0 AND po.condition = 'new' AND po.audit_status <> 'rejected'\n  AND po.obs_date BETWEEN :winStart AND :winEnd\nGROUP BY po.obs_date ORDER BY po.obs_date",
+      "sqlHash": "dayHealth@1k9o800",
+      "params": [
+        {
+          "name": "winStart",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "winEnd",
+          "type": "date",
+          "required": true
+        }
+      ],
+      "flags": {
+        "device": true,
+        "noBundle": true,
+        "newOnly": true,
+        "auditOk": true,
+        "rivalOnly": false,
+        "priceFloor": false,
+        "accessoryWords": false
+      },
+      "readOnly": true
+    },
+    "coverage": {
+      "sql": "WITH filtered AS (\n  SELECT po.id, po.obs_date, po.country_code, po.channel_id, po.brand_id,\n         po.category_code, po.title, po.model_guess, po.rom_gb, po.ram_gb,\n         po.sale_price, po.list_price, po.currency, po.discount_pct,\n         po.installments, po.is_bundle, po.seller_kind, po.sku_code,\n         b.name AS brand_name, ch.name AS channel_name\n  FROM price_obs po\n  JOIN brand b ON b.id = po.brand_id\n  LEFT JOIN channel ch ON ch.id = po.channel_id\n  WHERE po.product_kind = 'device' AND po.is_bundle = 0 AND po.condition = 'new' AND po.audit_status <> 'rejected'\n    AND b.is_ours = 0\n    AND (po.sale_price > CASE po.country_code WHEN 'MX' THEN 1500 WHEN 'CL' THEN 50000 WHEN 'CO' THEN 250000 WHEN 'PE' THEN 250 WHEN 'BR' THEN 400 WHEN 'AR' THEN 0 ELSE 0 END)\n    AND (LOWER(po.title) NOT LIKE '%funda%' AND LOWER(po.title) NOT LIKE '%forro%' AND LOWER(po.title) NOT LIKE '%estuche%' AND LOWER(po.title) NOT LIKE '%case%' AND LOWER(po.title) NOT LIKE '%carcasa%' AND LOWER(po.title) NOT LIKE '%mica%' AND LOWER(po.title) NOT LIKE '%vidrio%' AND LOWER(po.title) NOT LIKE '%lamina%' AND LOWER(po.title) NOT LIKE '%hidrogel%' AND LOWER(po.title) NOT LIKE '%protector%' AND LOWER(po.title) NOT LIKE '%cargador%' AND LOWER(po.title) NOT LIKE '%flex%' AND LOWER(po.title) NOT LIKE '%repuesto%' AND LOWER(po.title) NOT LIKE '%pelicula%' AND LOWER(po.title) NOT LIKE '%película%' AND LOWER(po.title) NOT LIKE '%capa%' AND LOWER(po.title) NOT LIKE '%capinha%' AND LOWER(po.title) NOT LIKE '%correa%' AND LOWER(po.title) NOT LIKE '%pulseira%' AND LOWER(po.title) NOT LIKE '%soporte%' AND LOWER(po.title) NOT LIKE '%adaptador%' AND LOWER(po.title) NOT LIKE '%cable%')\n    AND po.obs_date BETWEEN :winStart AND :winEnd\n)\nSELECT country_code AS country, category_code AS category,\n       COUNT(*) AS rows_n,\n       COUNT(DISTINCT COALESCE(NULLIF(model_guess, ''), title)) AS models,\n       COUNT(DISTINCT channel_id) AS channels,\n       COUNT(DISTINCT obs_date) AS days,\n       COUNT(DISTINCT brand_id) AS brands\nFROM filtered\nGROUP BY country_code, category_code",
+      "sqlHash": "coverage@1hldia0",
+      "params": [
+        {
+          "name": "winStart",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "winEnd",
+          "type": "date",
+          "required": true
+        }
+      ],
+      "flags": {
+        "device": true,
+        "noBundle": true,
+        "newOnly": true,
+        "auditOk": true,
+        "rivalOnly": true,
+        "priceFloor": true,
+        "accessoryWords": true
+      },
+      "readOnly": true
+    },
+    "promoBoard": {
+      "sql": "WITH filtered AS (\n  SELECT po.id, po.obs_date, po.country_code, po.channel_id, po.brand_id,\n         po.category_code, po.title, po.model_guess, po.rom_gb, po.ram_gb,\n         po.sale_price, po.list_price, po.currency, po.discount_pct,\n         po.installments, po.is_bundle, po.seller_kind, po.sku_code,\n         b.name AS brand_name, ch.name AS channel_name\n  FROM price_obs po\n  JOIN brand b ON b.id = po.brand_id\n  LEFT JOIN channel ch ON ch.id = po.channel_id\n  WHERE po.product_kind = 'device' AND po.is_bundle = 0 AND po.condition = 'new' AND po.audit_status <> 'rejected'\n    AND b.is_ours = 0\n    AND (po.sale_price > CASE po.country_code WHEN 'MX' THEN 1500 WHEN 'CL' THEN 50000 WHEN 'CO' THEN 250000 WHEN 'PE' THEN 250 WHEN 'BR' THEN 400 WHEN 'AR' THEN 0 ELSE 0 END)\n    AND (LOWER(po.title) NOT LIKE '%funda%' AND LOWER(po.title) NOT LIKE '%forro%' AND LOWER(po.title) NOT LIKE '%estuche%' AND LOWER(po.title) NOT LIKE '%case%' AND LOWER(po.title) NOT LIKE '%carcasa%' AND LOWER(po.title) NOT LIKE '%mica%' AND LOWER(po.title) NOT LIKE '%vidrio%' AND LOWER(po.title) NOT LIKE '%lamina%' AND LOWER(po.title) NOT LIKE '%hidrogel%' AND LOWER(po.title) NOT LIKE '%protector%' AND LOWER(po.title) NOT LIKE '%cargador%' AND LOWER(po.title) NOT LIKE '%flex%' AND LOWER(po.title) NOT LIKE '%repuesto%' AND LOWER(po.title) NOT LIKE '%pelicula%' AND LOWER(po.title) NOT LIKE '%película%' AND LOWER(po.title) NOT LIKE '%capa%' AND LOWER(po.title) NOT LIKE '%capinha%' AND LOWER(po.title) NOT LIKE '%correa%' AND LOWER(po.title) NOT LIKE '%pulseira%' AND LOWER(po.title) NOT LIKE '%soporte%' AND LOWER(po.title) NOT LIKE '%adaptador%' AND LOWER(po.title) NOT LIKE '%cable%')\n    AND po.obs_date BETWEEN :winStart AND :winEnd\n),\nranked AS (\n  SELECT brand_name || '|' || country_code || '|' || category_code AS k, discount_pct AS v,\n         ROW_NUMBER() OVER (PARTITION BY brand_name || '|' || country_code || '|' || category_code ORDER BY discount_pct) AS rn,\n         COUNT(*)     OVER (PARTITION BY brand_name || '|' || country_code || '|' || category_code) AS c\n  FROM filtered\n  WHERE discount_pct > 0\n)\n,\nmed AS (\n  SELECT k,\n  MAX(c) AS n,\n  AVG(CASE WHEN rn * 2 IN (c + 1, c + 2) THEN v END) AS med,\n  AVG(CASE WHEN rn = (c + 3) / 4 THEN v END)         AS p25,\n  AVG(CASE WHEN rn = (3 * c + 3) / 4 THEN v END)     AS p75,\n  MIN(v) AS mn, MAX(v) AS mx\n  FROM ranked GROUP BY k\n),\ntot AS (\n  SELECT brand_name || '|' || country_code || '|' || category_code AS k,\n         COUNT(*) AS n_all,\n         SUM(CASE WHEN discount_pct > 0 THEN 1 ELSE 0 END) AS n_promo,\n         COUNT(DISTINCT channel_id) AS n_channels,\n         COUNT(DISTINCT obs_date) AS n_days\n  FROM filtered GROUP BY k\n)\nSELECT t.k AS group_key, t.n_all, t.n_promo, t.n_channels, t.n_days,\n       CAST(t.n_promo AS REAL) / NULLIF(t.n_all, 0) AS breadth,\n       m.med AS depth, m.p25, m.p75, m.mn, m.mx, m.n AS depth_n\nFROM tot t LEFT JOIN med m ON m.k = t.k\nWHERE t.n_all >= :minRows\nORDER BY t.n_all DESC",
+      "sqlHash": "promoBoard@17b9azf",
+      "params": [
+        {
+          "name": "winStart",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "winEnd",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "minRows",
+          "type": "int",
+          "required": false,
+          "def": 5
+        }
+      ],
+      "flags": {
+        "device": true,
+        "noBundle": true,
+        "newOnly": true,
+        "auditOk": true,
+        "rivalOnly": true,
+        "priceFloor": true,
+        "accessoryWords": true
+      },
+      "readOnly": true
+    },
+    "priceByStorage": {
+      "sql": "WITH filtered AS (\n  SELECT po.id, po.obs_date, po.country_code, po.channel_id, po.brand_id,\n         po.category_code, po.title, po.model_guess, po.rom_gb, po.ram_gb,\n         po.sale_price, po.list_price, po.currency, po.discount_pct,\n         po.installments, po.is_bundle, po.seller_kind, po.sku_code,\n         b.name AS brand_name, ch.name AS channel_name\n  FROM price_obs po\n  JOIN brand b ON b.id = po.brand_id\n  LEFT JOIN channel ch ON ch.id = po.channel_id\n  WHERE po.product_kind = 'device' AND po.is_bundle = 0 AND po.condition = 'new' AND po.audit_status <> 'rejected'\n    AND b.is_ours = 0\n    AND (po.sale_price > CASE po.country_code WHEN 'MX' THEN 1500 WHEN 'CL' THEN 50000 WHEN 'CO' THEN 250000 WHEN 'PE' THEN 250 WHEN 'BR' THEN 400 WHEN 'AR' THEN 0 ELSE 0 END)\n    AND (LOWER(po.title) NOT LIKE '%funda%' AND LOWER(po.title) NOT LIKE '%forro%' AND LOWER(po.title) NOT LIKE '%estuche%' AND LOWER(po.title) NOT LIKE '%case%' AND LOWER(po.title) NOT LIKE '%carcasa%' AND LOWER(po.title) NOT LIKE '%mica%' AND LOWER(po.title) NOT LIKE '%vidrio%' AND LOWER(po.title) NOT LIKE '%lamina%' AND LOWER(po.title) NOT LIKE '%hidrogel%' AND LOWER(po.title) NOT LIKE '%protector%' AND LOWER(po.title) NOT LIKE '%cargador%' AND LOWER(po.title) NOT LIKE '%flex%' AND LOWER(po.title) NOT LIKE '%repuesto%' AND LOWER(po.title) NOT LIKE '%pelicula%' AND LOWER(po.title) NOT LIKE '%película%' AND LOWER(po.title) NOT LIKE '%capa%' AND LOWER(po.title) NOT LIKE '%capinha%' AND LOWER(po.title) NOT LIKE '%correa%' AND LOWER(po.title) NOT LIKE '%pulseira%' AND LOWER(po.title) NOT LIKE '%soporte%' AND LOWER(po.title) NOT LIKE '%adaptador%' AND LOWER(po.title) NOT LIKE '%cable%')\n    AND po.obs_date BETWEEN :winStart AND :winEnd\n),\nhit AS (\n  SELECT * FROM filtered\n  WHERE model_guess IS NOT NULL AND model_guess <> ''\n    AND model_guess NOT IN ('白牌-未识别', '未识别', 'Others', 'unknown')\n    AND LOWER(model_guess) LIKE LOWER(:modelLike)\n    AND sale_price > 0\n),\nranked AS (\n  SELECT COALESCE(rom_gb, -1) || '|' || country_code || '|' || currency AS k, sale_price AS v,\n         ROW_NUMBER() OVER (PARTITION BY COALESCE(rom_gb, -1) || '|' || country_code || '|' || currency ORDER BY sale_price) AS rn,\n         COUNT(*)     OVER (PARTITION BY COALESCE(rom_gb, -1) || '|' || country_code || '|' || currency) AS c\n  FROM hit\n)\n\nSELECT k AS group_key,\n  MAX(c) AS n,\n  AVG(CASE WHEN rn * 2 IN (c + 1, c + 2) THEN v END) AS med,\n  AVG(CASE WHEN rn = (c + 3) / 4 THEN v END)         AS p25,\n  AVG(CASE WHEN rn = (3 * c + 3) / 4 THEN v END)     AS p75,\n  MIN(v) AS mn, MAX(v) AS mx\nFROM ranked GROUP BY k ORDER BY k",
+      "sqlHash": "priceByStorage@1aw71k3",
+      "params": [
+        {
+          "name": "winStart",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "winEnd",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "modelLike",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "flags": {
+        "device": true,
+        "noBundle": true,
+        "newOnly": true,
+        "auditOk": true,
+        "rivalOnly": true,
+        "priceFloor": true,
+        "accessoryWords": true
+      },
+      "readOnly": true
+    },
+    "launchCards": {
+      "sql": "WITH base AS (\n  SELECT po.brand_id, b.name AS brand_name, po.rival_product_id,\n         po.model_guess AS model_key,\n         po.country_code, po.category_code, po.obs_date, po.sale_price, po.currency\n  FROM price_obs po JOIN brand b ON b.id = po.brand_id\n  WHERE po.product_kind = 'device' AND po.is_bundle = 0 AND po.condition = 'new' AND po.audit_status <> 'rejected'\n    AND b.is_ours = 0\n    AND (po.sale_price > CASE po.country_code WHEN 'MX' THEN 1500 WHEN 'CL' THEN 50000 WHEN 'CO' THEN 250000 WHEN 'PE' THEN 250 WHEN 'BR' THEN 400 WHEN 'AR' THEN 0 ELSE 0 END)\n    AND (LOWER(po.title) NOT LIKE '%funda%' AND LOWER(po.title) NOT LIKE '%forro%' AND LOWER(po.title) NOT LIKE '%estuche%' AND LOWER(po.title) NOT LIKE '%case%' AND LOWER(po.title) NOT LIKE '%carcasa%' AND LOWER(po.title) NOT LIKE '%mica%' AND LOWER(po.title) NOT LIKE '%vidrio%' AND LOWER(po.title) NOT LIKE '%lamina%' AND LOWER(po.title) NOT LIKE '%hidrogel%' AND LOWER(po.title) NOT LIKE '%protector%' AND LOWER(po.title) NOT LIKE '%cargador%' AND LOWER(po.title) NOT LIKE '%flex%' AND LOWER(po.title) NOT LIKE '%repuesto%' AND LOWER(po.title) NOT LIKE '%pelicula%' AND LOWER(po.title) NOT LIKE '%película%' AND LOWER(po.title) NOT LIKE '%capa%' AND LOWER(po.title) NOT LIKE '%capinha%' AND LOWER(po.title) NOT LIKE '%correa%' AND LOWER(po.title) NOT LIKE '%pulseira%' AND LOWER(po.title) NOT LIKE '%soporte%' AND LOWER(po.title) NOT LIKE '%adaptador%' AND LOWER(po.title) NOT LIKE '%cable%')\n    AND (po.model_guess IS NOT NULL AND po.model_guess <> ''\n     AND po.model_guess NOT IN ('白牌-未识别', '未识别', 'Others', 'unknown'))\n    AND po.obs_date >= :scanSince\n),\nfirsts AS (\n  SELECT brand_name, model_key, country_code, category_code,\n         MIN(obs_date) AS first_seen, COUNT(*) AS n,\n         COUNT(DISTINCT obs_date) AS n_days,\n         MAX(rival_product_id) AS rp_id\n  FROM base GROUP BY brand_name, model_key, country_code, category_code\n),\nregionFirst AS (\n  SELECT brand_name, model_key, category_code,\n         MIN(obs_date) AS region_first_seen,\n         COUNT(DISTINCT country_code) AS n_countries\n  FROM base GROUP BY brand_name, model_key, category_code\n)\nSELECT f.brand_name, f.model_key, f.country_code, f.category_code,\n       f.first_seen, f.n, f.n_days,\n       rf.region_first_seen, rf.n_countries,\n       COALESCE(rp1.chipset, rp2.chipset)         AS chipset,\n       COALESCE(rp1.battery_mah, rp2.battery_mah) AS battery_mah,\n       COALESCE(rp1.screen_size, rp2.screen_size) AS screen_size,\n       COALESCE(rp1.series, rp2.series)           AS series,\n       COALESCE(rp1.extra_specs, rp2.extra_specs) AS extra_specs,\n       COALESCE(rp1.spec_source, rp2.spec_source) AS spec_source\nFROM firsts f\nJOIN regionFirst rf ON rf.brand_name = f.brand_name\n                   AND rf.model_key = f.model_key\n                   AND rf.category_code = f.category_code\nLEFT JOIN rival_product rp1 ON rp1.id = f.rp_id\nLEFT JOIN rival_product rp2\n  ON rp2.category_code = f.category_code\n AND rp2.model_key = LOWER(REPLACE(REPLACE(f.model_key, ' ', ''), '-', ''))\nWHERE f.first_seen >= :newSince AND f.first_seen <= :newUntil\nORDER BY f.first_seen DESC, f.n DESC\nLIMIT :limit",
+      "sqlHash": "launchCards@1duu1k9",
+      "params": [
+        {
+          "name": "scanSince",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "newSince",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "newUntil",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "def": 200
+        }
+      ],
+      "flags": {
+        "device": true,
+        "noBundle": true,
+        "newOnly": true,
+        "auditOk": true,
+        "rivalOnly": true,
+        "priceFloor": true,
+        "accessoryWords": true
+      },
+      "readOnly": true
+    },
+    "priceMoves": {
+      "sql": "SELECT pm.move_date, pm.country_code, pm.category_code,\n       b.name AS brand, ch.name AS channel,\n       pm.prev_price, pm.curr_price, pm.change_pct, pm.direction,\n       pm.prev_date, pm.days_span, pm.currency, pm.sku_key, pm.is_official\nFROM price_move pm\nJOIN brand b ON b.id = pm.brand_id\nLEFT JOIN channel ch ON ch.id = pm.channel_id\nWHERE pm.move_date BETWEEN :winStart AND :winEnd\n  AND ABS(pm.change_pct) >= :minPct\n  AND b.is_ours = 0\nORDER BY ABS(pm.change_pct) DESC\nLIMIT :limit",
+      "sqlHash": "priceMoves@1nqymqg",
+      "params": [
+        {
+          "name": "winStart",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "winEnd",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "minPct",
+          "type": "num",
+          "required": false,
+          "def": 2
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "def": 200
+        }
+      ],
+      "flags": {
+        "device": false,
+        "noBundle": false,
+        "newOnly": false,
+        "auditOk": false,
+        "rivalOnly": true,
+        "priceFloor": false,
+        "accessoryWords": false
+      },
+      "readOnly": true
+    },
+    "modelCatalog": {
+      "sql": "WITH filtered AS (\n  SELECT po.id, po.obs_date, po.country_code, po.channel_id, po.brand_id,\n         po.category_code, po.title, po.model_guess, po.rom_gb, po.ram_gb,\n         po.sale_price, po.list_price, po.currency, po.discount_pct,\n         po.installments, po.is_bundle, po.seller_kind, po.sku_code,\n         b.name AS brand_name, ch.name AS channel_name\n  FROM price_obs po\n  JOIN brand b ON b.id = po.brand_id\n  LEFT JOIN channel ch ON ch.id = po.channel_id\n  WHERE po.product_kind = 'device' AND po.is_bundle = 0 AND po.condition = 'new' AND po.audit_status <> 'rejected'\n    AND b.is_ours = 0\n    AND (po.sale_price > CASE po.country_code WHEN 'MX' THEN 1500 WHEN 'CL' THEN 50000 WHEN 'CO' THEN 250000 WHEN 'PE' THEN 250 WHEN 'BR' THEN 400 WHEN 'AR' THEN 0 ELSE 0 END)\n    AND (LOWER(po.title) NOT LIKE '%funda%' AND LOWER(po.title) NOT LIKE '%forro%' AND LOWER(po.title) NOT LIKE '%estuche%' AND LOWER(po.title) NOT LIKE '%case%' AND LOWER(po.title) NOT LIKE '%carcasa%' AND LOWER(po.title) NOT LIKE '%mica%' AND LOWER(po.title) NOT LIKE '%vidrio%' AND LOWER(po.title) NOT LIKE '%lamina%' AND LOWER(po.title) NOT LIKE '%hidrogel%' AND LOWER(po.title) NOT LIKE '%protector%' AND LOWER(po.title) NOT LIKE '%cargador%' AND LOWER(po.title) NOT LIKE '%flex%' AND LOWER(po.title) NOT LIKE '%repuesto%' AND LOWER(po.title) NOT LIKE '%pelicula%' AND LOWER(po.title) NOT LIKE '%película%' AND LOWER(po.title) NOT LIKE '%capa%' AND LOWER(po.title) NOT LIKE '%capinha%' AND LOWER(po.title) NOT LIKE '%correa%' AND LOWER(po.title) NOT LIKE '%pulseira%' AND LOWER(po.title) NOT LIKE '%soporte%' AND LOWER(po.title) NOT LIKE '%adaptador%' AND LOWER(po.title) NOT LIKE '%cable%')\n    AND po.obs_date BETWEEN :winStart AND :winEnd\n)\nSELECT brand_name, category_code, model_guess AS model_key,\n       COUNT(*) AS n, COUNT(DISTINCT country_code) AS n_countries,\n       MIN(obs_date) AS first_seen, MAX(obs_date) AS last_seen\nFROM filtered\nWHERE model_guess IS NOT NULL AND model_guess <> ''\n  AND model_guess NOT IN ('白牌-未识别', '未识别', 'Others', 'unknown')\n  AND (:brand IS NULL OR brand_name = :brand)\n  AND (:category IS NULL OR category_code = :category)\nGROUP BY brand_name, category_code, model_guess\nHAVING n >= :minRows\nORDER BY n DESC LIMIT :limit",
+      "sqlHash": "modelCatalog@1v76d2s",
+      "params": [
+        {
+          "name": "winStart",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "winEnd",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "brand",
+          "type": "str",
+          "required": false,
+          "def": null
+        },
+        {
+          "name": "category",
+          "type": "str",
+          "required": false,
+          "def": null
+        },
+        {
+          "name": "minRows",
+          "type": "int",
+          "required": false,
+          "def": 3
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "def": 500
+        }
+      ],
+      "flags": {
+        "device": true,
+        "noBundle": true,
+        "newOnly": true,
+        "auditOk": true,
+        "rivalOnly": true,
+        "priceFloor": true,
+        "accessoryWords": true
+      },
+      "readOnly": true
+    }
+  }
+}

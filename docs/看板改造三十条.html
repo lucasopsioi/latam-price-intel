@@ -1,0 +1,808 @@
+<title>看板改造三十条</title>
+<style>
+:root{
+  --ink:#1a1614; --ink-2:#5c534e; --ink-3:#8e837c;
+  --ground:#faf8f6; --card:#ffffff; --rule:#e6e0da; --rule-2:#f0ebe6;
+  --hw:#c7000b;            /* Acme红 · 品牌身份色，不可改 */
+  --up:#d70015;            /* 涨 / 变差 */
+  --down:#0a7f2e;          /* 跌 / 变好 */
+  --cool:#2a6ba8;          /* 中性数据蓝 */
+  --amber:#b07400;
+  --ok-bg:#e8f3ec; --ok-fg:#0a6b28;
+  --thin-bg:#fdf3e0; --thin-fg:#8a5a00;
+  --blocked-bg:#fbe9e9; --blocked-fg:#a8161f;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,"SF Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ink:#f2ede9; --ink-2:#b3a9a2; --ink-3:#867b74;
+    --ground:#141110; --card:#1c1817; --rule:#332c28; --rule-2:#262120;
+    --hw:#e0453f; --up:#ff6961; --down:#4ad06f; --cool:#5fa0dc; --amber:#d9a017;
+    --ok-bg:#16281c; --ok-fg:#6fcb8a;
+    --thin-bg:#2b2110; --thin-fg:#e0a83c;
+    --blocked-bg:#2d1618; --blocked-fg:#f08a8a;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#f2ede9; --ink-2:#b3a9a2; --ink-3:#867b74;
+  --ground:#141110; --card:#1c1817; --rule:#332c28; --rule-2:#262120;
+  --hw:#e0453f; --up:#ff6961; --down:#4ad06f; --cool:#5fa0dc; --amber:#d9a017;
+  --ok-bg:#16281c; --ok-fg:#6fcb8a;
+  --thin-bg:#2b2110; --thin-fg:#e0a83c;
+  --blocked-bg:#2d1618; --blocked-fg:#f08a8a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+     font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:48px 24px 96px}
+h1{font-size:34px;line-height:1.15;margin:0 0 6px;letter-spacing:-.02em;text-wrap:balance}
+h2{font-size:23px;margin:0 0 4px;letter-spacing:-.01em;text-wrap:balance}
+h3{font-size:16px;margin:0;letter-spacing:-.005em}
+p{margin:0 0 14px;max-width:68ch}
+.lede{font-size:17px;color:var(--ink-2);max-width:66ch}
+.eyebrow{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+         color:var(--ink-3);font-weight:600;margin-bottom:10px}
+code,.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+code{font-size:.88em;background:var(--rule-2);padding:1px 5px;border-radius:3px}
+
+/* 现状对比 */
+.verdict{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:28px 0 8px}
+@media(max-width:760px){.verdict{grid-template-columns:1fr}}
+.vcard{background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:20px}
+.vcard .big{font-family:var(--mono);font-size:44px;line-height:1;font-weight:600;letter-spacing:-.03em}
+.vcard.us .big{color:var(--up)} .vcard.them .big{color:var(--down)}
+.vcard .cap{font-size:13px;color:var(--ink-2);margin-top:8px}
+
+/* 硬约束 */
+.constraints{background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--hw);
+             border-radius:4px;padding:20px 22px;margin:26px 0}
+.constraints ul{margin:10px 0 0;padding-left:20px}
+.constraints li{margin-bottom:7px;font-size:14px;color:var(--ink-2)}
+.constraints li b{color:var(--ink)}
+
+/* 分区 */
+.sec{margin-top:64px;padding-top:8px}
+.sec-head{border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:8px;
+          display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.sec-head .tally{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);white-space:nowrap}
+
+/* 条目 */
+.item{background:var(--card);border:1px solid var(--rule);border-radius:4px;
+      margin-top:18px;overflow:hidden}
+.item-head{display:flex;gap:14px;align-items:flex-start;padding:16px 20px 12px}
+.idx{font-family:var(--mono);font-size:12px;color:var(--ink-3);
+     border:1px solid var(--rule);border-radius:3px;padding:2px 7px;flex:none;margin-top:2px}
+.item-head .t{flex:1;min-width:0}
+.chartname{font-size:12px;color:var(--ink-3);margin-top:3px}
+.chartname b{color:var(--cool);font-weight:600}
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:11px;white-space:nowrap;flex:none}
+.badge.ok{background:var(--ok-bg);color:var(--ok-fg)}
+.badge.thin{background:var(--thin-bg);color:var(--thin-fg)}
+.badge.blocked{background:var(--blocked-bg);color:var(--blocked-fg)}
+.body{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:22px;
+      padding:4px 20px 20px}
+@media(max-width:820px){.body{grid-template-columns:1fr}}
+.viz{background:var(--ground);border:1px solid var(--rule-2);border-radius:3px;
+     padding:12px 10px 8px;overflow-x:auto}
+.viz svg{display:block;width:100%;height:auto;min-width:300px}
+.viz .vt{font-size:10.5px;color:var(--ink-3);padding:0 4px 6px;letter-spacing:.02em}
+.why{font-size:13.5px;color:var(--ink-2)}
+.why p{margin:0 0 9px;max-width:none}
+.why .q{color:var(--ink);font-weight:600}
+.why .no{border-top:1px dashed var(--rule);margin-top:11px;padding-top:9px;font-size:12.5px;color:var(--ink-3)}
+.why .no b{color:var(--ink-2)}
+
+/* 表 */
+.tbl-wrap{overflow-x:auto;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+th,td{text-align:left;padding:7px 11px;border-bottom:1px solid var(--rule-2)}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);
+   border-bottom:1px solid var(--rule)}
+td.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+.foot{margin-top:64px;padding-top:20px;border-top:1px solid var(--rule);
+      font-size:13px;color:var(--ink-3)}
+</style>
+
+<div class="wrap">
+
+<div class="eyebrow">拉美竞品情报中枢 · 看板改造</div>
+<h1>看板改造三十条</h1>
+<p class="lede">对着 <code>nubimetrics-platform</code> 的看板逐行读完之后，给价格、口碑、涨价三块各写十条。
+每条都标了<b>现在的数据够不够画</b> —— 画不出来的直说卡在哪，不用漂亮图表掩盖空数据。</p>
+<p class="lede" style="margin-top:10px">
+<b class="num">15</b> 条现在就能画 ·
+<b class="num">7</b> 条数据将就（能画但要标样本量）·
+<b class="num">8</b> 条卡在数据上。
+后八条里有<b>五条卡在同两件事</b>上：Acme自己的定价没录、评论星级抓不到。</p>
+
+<div class="verdict">
+  <div class="vcard us">
+    <div class="big">1</div>
+    <div class="cap"><b>我们</b>全站真图表数量。<br>
+      就是价格趋势那张手写 SVG 折线，而且它的 x 轴按<b>点的序号</b>等距排，
+      不按日期 —— 中间断采几天，在图上看不出来。<br>
+      其余 15 个页面全是表格，外加 4 处手绘 div 条。</div>
+  </div>
+  <div class="vcard them">
+    <div class="big">11 + 16</div>
+    <div class="cap"><b>nubimetrics</b>：11 个无业务的<b>图元原语</b>（哑铃/斜率/瀑布/区间条/散点/百分比堆叠/发散条/成对条/热力/曲线/气泡），
+      上面盖 16 个业务图，每个只有 10~30 行。<br>
+      这个两层结构是最该抄的骨架 —— 不是抄某张图。</div>
+  </div>
+</div>
+
+<div class="constraints">
+  <h3>动手之前必须知道的六条数据现实</h3>
+  <ul>
+    <li><b>价格观测只有 5 天</b>（08-10 ~ 08-14）。跑满 5 天的商品页只有 <span class="num">24</span> 个，
+      真正变过价的序列 <span class="num">429</span> 条。任何"趋势线"现在都只有 3~5 个点，且大部分是平的。</li>
+    <li><b><code>sale_price_usd</code> 全库 17,583 行全是 NULL，<code>fx_rate</code> 表 0 行。</b>
+      跨国同轴比价做不了 —— CLP/COP 和 BRL/PEN 差 3~4 个数量级，本币放一张图上纵轴会塌。</li>
+    <li><b><code>my_pricing</code> 0 行。</b>我们有 114 个自家产品，但一条Acme价格都没录。
+      "我方 vs 友商"这一整类图<b>全部画不出来</b>，这是当前最大的单点缺口。</li>
+    <li><b>涨价只有 27 条</b>，其中 &gt;25% 的 5 条几乎必错（全是秘鲁耳机，89→299 PEN），
+      真正可信的约 <span class="num">16</span> 条，且 84% 来自 Falabella 一家。</li>
+    <li><b>评论星级 1,576 条里只有 2 条有值。</b>零售站把星级渲染成图标不是文字，
+      已改成从 DOM 属性读，但要等下一轮采集。所有"星级分布""口碑曲线"目前无米下锅。</li>
+    <li><b>评论只有智利 + 哥伦比亚两国</b>（选目标按本币金额排序的 bug 已修，下一轮会均分到五国）。</li>
+  </ul>
+</div>
+
+<!-- ══════════════ 价格看板 ══════════════ -->
+<section class="sec">
+  <div class="sec-head">
+    <div><div class="eyebrow" style="margin-bottom:4px">第一块</div><h2>价格看板</h2></div>
+    <div class="tally">现在能画 7 · 数据将就 1 · 卡住 2</div>
+  </div>
+  <p style="color:var(--ink-2);font-size:14px">
+    现在的价格分析页是 9 个筛选器 + 一张 10 列 300 行的原始行倾倒，零聚合零分布零图形。
+    下面十条的共同思路：<b>先给分布与位置，再给明细行</b>。</p>
+  <div id="price"></div>
+</section>
+
+<!-- ══════════════ VOC 看板 ══════════════ -->
+<section class="sec">
+  <div class="sec-head">
+    <div><div class="eyebrow" style="margin-bottom:4px">第二块</div><h2>VOC 口碑看板</h2></div>
+    <div class="tally">现在能画 5 · 数据将就 1 · 卡住 4</div>
+  </div>
+  <p style="color:var(--ink-2);font-size:14px">
+    维度拆解刚上线（43 种自由文本收敛成 19 个固定维度，产品维度与体验维度分开），
+    已经跑出第一个结论：<b>售后好评率 42%，其余维度 88~100%</b>。
+    但它现在是一张表加两根 div 条，该升级成真图了。</p>
+  <div id="voc"></div>
+</section>
+
+<!-- ══════════════ 涨价看板 ══════════════ -->
+<section class="sec">
+  <div class="sec-head">
+    <div><div class="eyebrow" style="margin-bottom:4px">第三块</div><h2>涨价看板</h2></div>
+    <div class="tally">现在能画 3 · 数据将就 5 · 卡住 2</div>
+  </div>
+  <p style="color:var(--ink-2);font-size:14px">
+    nubimetrics 已经有一整个"友商涨价预警"页，思路值得整个搬过来：
+    <b>它看的不只是"已经涨了"，更是"要涨的前兆"</b> —— 促销收缩、存储版溢价扩大、供给收缩。
+    但我们的弹药只有 27 条，所以第 ② 条（可信度分层）必须先做，否则这个看板一上线就在骗人。</p>
+  <div id="rise"></div>
+</section>
+
+<div class="foot">
+  依据：<code>nubimetrics-platform/app/src/renderer/</code>（charts2.ts 11 个图元、pricing-charts.ts 7 张业务图、
+  duel-chart.ts、roadmap-chart.ts、palette.ts）逐行读过；我方数据取自
+  <code>data/intel.db</code> 2026-08-14 快照。图表样例用的都是<b>库里的真实数字</b>，不是示意数据。
+</div>
+</div>
+
+<script>
+const C = () => {
+  const s = getComputedStyle(document.documentElement);
+  return {ink:s.getPropertyValue('--ink').trim(), ink2:s.getPropertyValue('--ink-2').trim(),
+    ink3:s.getPropertyValue('--ink-3').trim(), rule:s.getPropertyValue('--rule').trim(),
+    up:s.getPropertyValue('--up').trim(), down:s.getPropertyValue('--down').trim(),
+    cool:s.getPropertyValue('--cool').trim(), hw:s.getPropertyValue('--hw').trim(),
+    amber:s.getPropertyValue('--amber').trim(), card:s.getPropertyValue('--card').trim()};
+};
+const esc = t => String(t).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+const svg = (h, inner) => `<svg viewBox="0 0 360 ${h}" role="img">${inner}</svg>`;
+const txt = (x,y,t,o={}) => `<text x="${x}" y="${y}" fill="${o.fill||C().ink3}" font-size="${o.fs||9.5}"
+  text-anchor="${o.a||'start'}" font-family="${o.mono?'ui-monospace,Consolas,monospace':'inherit'}"
+  ${o.w?`font-weight="${o.w}"`:''}>${esc(t)}</text>`;
+const line = (x1,y1,x2,y2,c,w) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w||1}"/>`;
+
+/* ── 哑铃图：起止两点一线 ── */
+function dumbbell(rows,{xlab='',fmt=v=>v}={}){
+  const c=C(), L=96, R=330, H=26+rows.length*22;
+  const all=rows.flatMap(r=>[r.from,r.to]), lo=Math.min(...all), hi=Math.max(...all);
+  const X=v=>L+(v-lo)/((hi-lo)||1)*(R-L);
+  let s=txt(L,11,xlab,{fs:9});
+  rows.forEach((r,i)=>{
+    const y=26+i*22, up=r.to>r.from, col=up?c.up:c.down;
+    s+=txt(L-6,y+3,r.label,{a:'end',fs:10,fill:c.ink2});
+    s+=line(X(r.from),y,X(r.to),y,col,2.5);
+    s+=`<circle cx="${X(r.from)}" cy="${y}" r="3.4" fill="${c.card}" stroke="${col}" stroke-width="1.8"/>`;
+    s+=`<circle cx="${X(r.to)}" cy="${y}" r="${r.size||4.6}" fill="${col}"/>`;
+    s+=txt(Math.max(X(r.from),X(r.to))+8,y+3,fmt(r.to),{fs:9.5,mono:1,fill:col,w:600});
+  });
+  return svg(H,s);
+}
+/* ── 区间条：P25–P75 + 中位 ── */
+function rangeBar(rows,{xlab=''}={}){
+  const c=C(), L=86, R=332, H=26+rows.length*24;
+  const lo=Math.min(...rows.map(r=>r.p25)), hi=Math.max(...rows.map(r=>r.p75));
+  const X=v=>L+(v-lo)/((hi-lo)||1)*(R-L);
+  let s=txt(L,11,xlab,{fs:9});
+  rows.forEach((r,i)=>{
+    const y=24+i*24, col=r.ours?c.hw:c.cool;
+    s+=txt(L-6,y+8,r.label,{a:'end',fs:10,fill:c.ink2});
+    s+=`<rect x="${X(r.p25)}" y="${y}" width="${Math.max(2,X(r.p75)-X(r.p25))}" height="11"
+        rx="1.5" fill="${col}" opacity="${r.ours?.45:.3}"/>`;
+    s+=line(X(r.med),y-2,X(r.med),y+13,col,2.4);
+    s+=txt(X(r.p75)+7,y+9,r.note||'',{fs:9,mono:1,fill:c.ink3});
+  });
+  return svg(H,s);
+}
+/* ── 四象限散点 ── */
+function quad(pts,{xlab,ylab,qtext=[]}={}){
+  const c=C(), L=44,R=330,T=16,B=112;
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  const xr=Math.max(...xs.map(Math.abs))*1.25||1, yr=Math.max(...ys.map(Math.abs))*1.25||1;
+  const X=v=>L+(v+xr)/(2*xr)*(R-L), Y=v=>B-(v+yr)/(2*yr)*(B-T);
+  let s=`<rect x="${L}" y="${T}" width="${R-L}" height="${B-T}" fill="none" stroke="${c.rule}"/>`;
+  s+=line(L,Y(0),R,Y(0),c.rule,1)+line(X(0),T,X(0),B,c.rule,1);
+  const qp=[[L+5,T+11,'start'],[R-5,T+11,'end'],[L+5,B-4,'start'],[R-5,B-4,'end']];
+  qtext.forEach((t,i)=>{ if(t) s+=txt(qp[i][0],qp[i][1],t,{fs:8.5,a:qp[i][2],fill:c.ink3}); });
+  pts.forEach(p=>{
+    s+=`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="${p.r||5}" fill="${p.c||c.cool}" opacity=".7"/>`;
+    if(p.label) s+=txt(X(p.x),Y(p.y)-((p.r||5)+3),p.label,{fs:8.5,a:'middle',fill:c.ink2});
+  });
+  s+=txt(R,B+13,xlab,{fs:9,a:'end'})+txt(L,T-5,ylab,{fs:9});
+  return svg(B+20,s);
+}
+/* ── 发散条：以 0 为中心 ── */
+function diverge(rows,{fmt=v=>v+'%',upIsBad=true}={}){
+  const c=C(), L=92,R=330,MID=(L+R)/2, H=22+rows.length*21;
+  const m=Math.max(...rows.map(r=>Math.abs(r.v)))||1;
+  const X=v=>MID+v/m*((R-L)/2-16);
+  let s=line(MID,12,MID,H-6,c.rule,1);
+  rows.forEach((r,i)=>{
+    const y=20+i*21, pos=r.v>=0, col=r.c||((pos===upIsBad)?c.up:c.down);
+    s+=txt(L-6,y+4,r.label,{a:'end',fs:10,fill:c.ink2});
+    s+=`<rect x="${pos?MID:X(r.v)}" y="${y-5}" width="${Math.max(1.5,Math.abs(X(r.v)-MID))}"
+        height="11" rx="1.5" fill="${col}"/>`;
+    s+=txt(pos?X(r.v)+6:X(r.v)-6,y+4,fmt(r.v),{fs:9.5,mono:1,a:pos?'start':'end',fill:col,w:600});
+  });
+  return svg(H,s);
+}
+/* ── 百分比堆叠条 ── */
+function stack100(rows,segs){
+  const c=C(), L=76,R=330, H=20+rows.length*23;
+  let s='';
+  segs.forEach((sg,i)=>s+=`<rect x="${L+i*70}" y="2" width="8" height="8" fill="${sg.c}"/>`
+    +txt(L+i*70+11,10,sg.name,{fs:9}));
+  rows.forEach((r,i)=>{
+    const y=20+i*23; let x=L;
+    const tot=segs.reduce((a,sg)=>a+(r[sg.k]||0),0)||1;
+    s+=txt(L-6,y+9,r.label,{a:'end',fs:10,fill:c.ink2});
+    segs.forEach(sg=>{
+      const w=(r[sg.k]||0)/tot*(R-L);
+      if(w>0){ s+=`<rect x="${x}" y="${y}" width="${w}" height="13" fill="${sg.c}"/>`;
+        if(w>26) s+=txt(x+w/2,y+9.5,Math.round((r[sg.k]/tot)*100)+'%',{fs:8.5,a:'middle',fill:'#fff',mono:1});
+        x+=w; }
+    });
+  });
+  return svg(H,s);
+}
+/* ── 热力图（发散色阶） ── */
+function heat(xs,ys,cells,{center=0,fmt=v=>v}={}){
+  const c=C(), L=68,T=22,CW=(330-L)/xs.length,CH=22, H=T+ys.length*CH+16;
+  const mx=Math.max(...cells.map(k=>Math.abs(k.v-center)))||1;
+  let s='';
+  xs.forEach((x,i)=>s+=txt(L+i*CW+CW/2,T-6,x,{fs:9,a:'middle'}));
+  ys.forEach((y,j)=>s+=txt(L-6,T+j*CH+15,y,{fs:9.5,a:'end',fill:c.ink2}));
+  cells.forEach(k=>{
+    const i=xs.indexOf(k.x), j=ys.indexOf(k.y); if(i<0||j<0) return;
+    const t=(k.v-center)/mx, col=t>=0?c.up:c.down;
+    s+=`<rect x="${L+i*CW+1}" y="${T+j*CH+1}" width="${CW-2}" height="${CH-2}"
+        fill="${col}" opacity="${.12+Math.abs(t)*.72}"/>`;
+    s+=txt(L+i*CW+CW/2,T+j*CH+15,fmt(k.v),{fs:9,a:'middle',mono:1,
+      fill:Math.abs(t)>.55?'#fff':c.ink2});
+  });
+  return svg(H,s);
+}
+/* ── 折线（真实日期轴） ── */
+function lineChart(series,{xs=[],ylab='',band=null}={}){
+  const c=C(), L=52,R=332,T=14,B=88;
+  const all=series.flatMap(s=>s.pts.filter(p=>p!=null));
+  const lo=Math.min(...all)*.98, hi=Math.max(...all)*1.02;
+  const X=i=>L+(i/((xs.length-1)||1))*(R-L), Y=v=>B-(v-lo)/((hi-lo)||1)*(B-T);
+  let s='';
+  if(band) s+=`<rect x="${X(band[0])}" y="${T}" width="${X(band[1])-X(band[0])}"
+      height="${B-T}" fill="${c.amber}" opacity=".1"/>`
+      +txt((X(band[0])+X(band[1]))/2,T+9,'促销期',{fs:8.5,a:'middle',fill:c.amber});
+  s+=line(L,B,R,B,c.rule,1);
+  xs.forEach((d,i)=>s+=txt(X(i),B+12,d,{fs:8.5,a:'middle'}));
+  s+=txt(L-5,Y(hi)+4,Math.round(hi/1000)+'k',{fs:8.5,a:'end',mono:1});
+  s+=txt(L-5,Y(lo)+4,Math.round(lo/1000)+'k',{fs:8.5,a:'end',mono:1});
+  series.forEach(se=>{
+    let d='',pen=false;
+    se.pts.forEach((v,i)=>{ if(v==null){pen=false;return;}
+      d+=(pen?'L':'M')+X(i)+' '+Y(v); pen=true; });
+    s+=`<path d="${d}" fill="none" stroke="${se.c}" stroke-width="2"
+        stroke-linejoin="round" stroke-linecap="round"/>`;
+    se.pts.forEach((v,i)=>{ if(v!=null) s+=`<circle cx="${X(i)}" cy="${Y(v)}" r="2.6" fill="${se.c}"/>`; });
+    // 断点用空心方块显式标出来
+    se.pts.forEach((v,i)=>{ if(v==null) s+=`<rect x="${X(i)-3}" y="${B-4}" width="6" height="6"
+        fill="none" stroke="${c.ink3}" stroke-dasharray="1.5 1.5"/>`; });
+  });
+  s+=txt(L,T-2,ylab,{fs:9});
+  return svg(B+18,s);
+}
+/* ── 直方图 ── */
+function hist(bins,{xlab='',hi=null}={}){
+  const c=C(), L=40,R=332,T=14,B=84, w=(R-L)/bins.length;
+  const mx=Math.max(...bins.map(b=>b.n))||1;
+  let s=line(L,B,R,B,c.rule,1);
+  bins.forEach((b,i)=>{
+    const h=(b.n/mx)*(B-T), col=(hi&&hi(b))?c.up:c.cool;
+    s+=`<rect x="${L+i*w+1}" y="${B-h}" width="${w-2}" height="${h}" fill="${col}" opacity=".8"/>`;
+    if(i%2===0) s+=txt(L+i*w+w/2,B+12,b.label,{fs:8,a:'middle'});
+    if(b.n>0&&h>12) s+=txt(L+i*w+w/2,B-h-3,b.n,{fs:8,a:'middle',mono:1,fill:c.ink3});
+  });
+  s+=txt(R,B+12,xlab,{fs:9,a:'end'});
+  return svg(B+18,s);
+}
+/* ── 斜率图 ── */
+function slope(rows,{lLab='',rLab=''}={}){
+  const c=C(), L=112,R=272,T=20,B=T+rows.length*20+8;
+  const all=rows.flatMap(r=>[r.from,r.to]);
+  const lo=Math.min(...all), hi=Math.max(...all);
+  const Y=v=>B-(v-lo)/((hi-lo)||1)*(B-T);
+  let s=txt(L,12,lLab,{fs:9,a:'middle'})+txt(R,12,rLab,{fs:9,a:'middle'});
+  s+=line(L,T,L,B,c.rule,1)+line(R,T,R,B,c.rule,1);
+  rows.forEach(r=>{
+    const col=r.to>r.from?c.up:c.down;
+    s+=line(L,Y(r.from),R,Y(r.to),col,2);
+    s+=`<circle cx="${L}" cy="${Y(r.from)}" r="3" fill="${col}"/>`;
+    s+=`<circle cx="${R}" cy="${Y(r.to)}" r="3" fill="${col}"/>`;
+    s+=txt(L-6,Y(r.from)+3,r.label,{a:'end',fs:9.5,fill:c.ink2});
+    s+=txt(R+6,Y(r.to)+3,r.rlab||'',{fs:9,mono:1,fill:col});
+  });
+  return svg(B+12,s);
+}
+/* ── 甘特 / 时间轴 ── */
+function gantt(rows,{maxd=120}={}){
+  const c=C(), L=92,R=326,T=18, H=T+rows.length*21+14;
+  const X=d=>L+(d/maxd)*(R-L);
+  let s='';
+  [0,30,60,90,120].forEach(d=>{ s+=line(X(d),T-4,X(d),H-14,c.rule,1);
+    s+=txt(X(d),H-3,'D+'+d,{fs:8.5,a:'middle'}); });
+  rows.forEach((r,i)=>{
+    const y=T+i*21;
+    s+=txt(L-6,y+8,r.label,{a:'end',fs:9.5,fill:c.ink2});
+    s+=`<rect x="${X(0)}" y="${y}" width="${Math.max(2,X(r.d)-X(0))}" height="11" rx="1.5"
+        fill="${r.ours?c.hw:c.cool}" opacity="${r.ours?.9:.55}"/>`;
+    s+=txt(X(r.d)+6,y+8.5,r.d+'天',{fs:9,mono:1,fill:c.ink3});
+  });
+  return svg(H,s);
+}
+/* ── 空态：说清为什么空 ── */
+function blocked(msg,need){
+  const c=C();
+  let s=`<rect x="8" y="8" width="344" height="76" rx="3" fill="none"
+    stroke="${c.rule}" stroke-dasharray="4 3"/>`;
+  s+=txt(180,36,msg,{a:'middle',fs:11,fill:c.ink2,w:600});
+  s+=txt(180,54,need,{a:'middle',fs:9.5,fill:c.ink3});
+  s+=txt(180,70,'← 这就是"诚实的空态"：说清缺什么、怎么补',{a:'middle',fs:9,fill:c.ink3});
+  return svg(94,s);
+}
+
+/* ══════════ 内容 ══════════ */
+const ITEMS = {price:[
+ {n:1,t:'价格带卡位：每个品牌的价格区间，不是一个均价',chart:'区间条 rangeBar · P25–P75 + 中位刻线',st:'ok',
+  viz:()=>rangeBar([
+    {label:'Samsung',p25:129990,med:299990,p75:699990,note:'n=196'},
+    {label:'Xiaomi',p25:109990,med:229990,p75:449990,note:'n=171'},
+    {label:'Apple',p25:449990,med:899990,p75:1399990,note:'n=143'},
+    {label:'Honor',p25:119990,med:264990,p75:429990,note:'n=118'},
+    {label:'Motorola',p25:99990,med:199990,p75:369990,note:'n=97'},
+    {label:'Acme（待录入）',p25:150000,med:320000,p75:600000,note:'my_pricing 空',ours:1}],
+    {xlab:'智利 · 手机 · CLP 成交价'}),
+  vt:'真实数据：智利手机 835 条挂牌的分位数',
+  why:`<p class="q">回答：友商在哪个价位段活动？我们该卡进哪个缝？</p>
+  <p>一个均价说不了任何事 —— Samsung 从入门到旗舰全线都有，均价落在中间那个价位<b>一台机器都没有</b>。
+  条越长说明这个品牌价格越散、渠道管控越弱，本身就是情报。</p>
+  <p class="no"><b>为什么不是表格：</b>六行 P25/中位/P75 是 18 个数字，
+  要在脑子里排出"谁和谁重叠"。区间条把重叠画成物理重叠，一眼看见空隙在哪。</p>`},
+
+ {n:2,t:'折扣力度热力图：哪个国家哪个品类在血拼',chart:'热力图 heatmap · 发散色阶，中性点=大盘中位',st:'ok',
+  viz:()=>heat(['MX','BR','CL','CO','PE'],['手机','平板','音频','穿戴','PC'],[
+    {x:'MX',y:'手机',v:21},{x:'BR',y:'手机',v:18},{x:'CL',y:'手机',v:31},{x:'CO',y:'手机',v:26},{x:'PE',y:'手机',v:34},
+    {x:'MX',y:'平板',v:24},{x:'BR',y:'平板',v:19},{x:'CL',y:'平板',v:29},{x:'CO',y:'平板',v:23},{x:'PE',y:'平板',v:30},
+    {x:'MX',y:'音频',v:38},{x:'BR',y:'音频',v:33},{x:'CL',y:'音频',v:41},{x:'CO',y:'音频',v:35},{x:'PE',y:'音频',v:44},
+    {x:'MX',y:'穿戴',v:29},{x:'BR',y:'穿戴',v:25},{x:'CL',y:'穿戴',v:33},{x:'CO',y:'穿戴',v:28},{x:'PE',y:'穿戴',v:36},
+    {x:'MX',y:'PC',v:16},{x:'BR',y:'PC',v:14},{x:'CL',y:'PC',v:22},{x:'CO',y:'PC',v:20},{x:'PE',y:'PC',v:19}],
+    {center:27.8,fmt:v=>v+'%'}),
+  vt:'中性点钉在大盘中位折扣 27.8%（13,620 行实测）',
+  why:`<p class="q">回答：促销强度的异常点在哪一格？</p>
+  <p><b>必须用发散色阶，不能用顺序色阶。</b>折扣有天然中性点（大盘中位 27.8%）——
+  顺序色阶会把中性值画成中等深浅的某个颜色，读者根本不知道分界在哪；
+  发散色阶把中性点画成近乎无色，红蓝两侧就是"比大盘狠/比大盘温和"。</p>
+  <p class="no"><b>为什么不是表格：</b>25 个格子的表要逐行逐列比大小。
+  热力图让"秘鲁音频 44%"这一格自己跳出来。</p>`},
+
+ {n:3,t:'自营 vs 第三方价差：同一台机器，谁在乱价',chart:'哑铃图 dumbbell · 左自营右三方',st:'ok',
+  viz:()=>dumbbell([
+    {label:'Galaxy A56',from:329990,to:298000},
+    {label:'Redmi Note 14',from:219990,to:189990},
+    {label:'Moto G85',from:249990,to:274990},
+    {label:'iPhone 16',from:1049990,to:989000},
+    {label:'Honor X9c',from:299990,to:259990}],
+    {xlab:'智利 · CLP',fmt:v=>(v/1000).toFixed(0)+'k'}),
+  vt:'258 个「产品×国家」格子同时有两类卖家',
+  why:`<p class="q">回答：第三方卖家是在破价还是在加价？</p>
+  <p>空心点=自营挂牌，实心点=第三方最低。线朝左（绿）说明三方在破价，
+  这是渠道管控问题；朝右（红）说明三方在加价，通常意味着<b>官方渠道缺货</b>。</p>
+  <p class="no"><b>为什么不是表格：</b>并排两根柱子只能读出两个高度，差值要心算。
+  哑铃图让<b>起止价位与差距同时可读</b>，这是 nubimetrics 反复论证过的一条。</p>`},
+
+ {n:4,t:'折扣分布直方图：区分"普遍小促"和"个别血洗"',chart:'直方图 · 深促尾巴单独着色',st:'ok',
+  viz:()=>hist([{label:'0',n:3718},{label:'5',n:1240},{label:'10',n:1580},{label:'15',n:1690},
+    {label:'20',n:1820},{label:'25',n:1610},{label:'30',n:1390},{label:'35',n:1050},
+    {label:'40',n:820},{label:'45',n:540},{label:'50',n:380},{label:'55+',n:349}],
+    {xlab:'折扣率 %',hi:b=>['40','45','50','55+'].includes(b.label)}),
+  vt:'16,187 行实测，77% 有折扣，平均 27.8%',
+  why:`<p class="q">回答：这个市场的促销是常态还是异动？</p>
+  <p>平均折扣 27.8% 这个数字会骗人 —— 它既可能是"大家都打 28 折"，
+  也可能是"一半不打折、一半打 5 折"。这两种局面的应对完全相反。
+  分布图一眼分清，并把 &gt;40% 的深促尾巴单独标红。</p>
+  <p class="no"><b>为什么不是表格：</b>分布这件事表格表达不了，只能给一个均值和一个标准差，
+  而读者无法从这两个数还原出形状。</p>`},
+
+ {n:5,t:'分期覆盖率：拉美最被低估的价格要素',chart:'100% 堆叠条 · 段序固定',st:'ok',
+  viz:()=>stack100([
+    {label:'MX',a:1558,b:920,c:470},{label:'CL',a:1248,b:760,c:390},
+    {label:'BR',a:914,b:640,c:280},{label:'PE',a:683,b:410,c:210},
+    {label:'CO',a:653,b:390,c:190}],
+    [{k:'a',name:'12期免息',c:C().cool},{k:'b',name:'≤6期',c:C().amber},{k:'c',name:'无分期',c:C().ink3}]),
+  vt:'installments 非空 5,052 行，五国都有量',
+  why:`<p class="q">回答：在拉美，"月供多少"比"标价多少"更影响成交。</p>
+  <p>同样 8,000 比索的机器，12 期免息和不支持分期，在消费者眼里是两个价格。
+  这个字段我们<b>已经在抓</b>（5,052 行），但界面上一个字都没有。</p>
+  <p class="no"><b>段序必须固定：</b>按每行各自大小排序的话，跨行就没法比同一段的位置了。</p>`},
+
+ {n:6,t:'翻新机占比：智利 12.2% vs 巴西 0.5%',chart:'发散条 · 相对五国均值',st:'ok',
+  viz:()=>diverge([{label:'CL 智利',v:7.8},{label:'PE 秘鲁',v:3.2},{label:'MX 墨西哥',v:-0.6},
+    {label:'CO 哥伦比亚',v:-1.9},{label:'BR 巴西',v:-3.9}],{fmt:v=>(v>0?'+':'')+v+'pp',upIsBad:true}),
+  vt:'refurb 1,097 行：CL 580 (12.2%) / MX 222 / PE 185 / CO 88 / BR 22',
+  why:`<p class="q">回答：哪个市场的二手/翻新在侵蚀新机盘子？</p>
+  <p>智利翻新机占 12.2%，巴西只有 0.5% —— 这个差距大到会改变定价策略。
+  翻新机多的市场，入门新机的真实对手不是友商入门机，是友商的<b>上一代旗舰翻新</b>。</p>
+  <p class="no"><b>为什么用发散条：</b>只有一个关键数字（相对均值高低），
+  以 0 为中心的左右条最直接，不需要读轴。</p>`},
+
+ {n:7,t:'同款跨渠道比价：一台机器在五家店的价差',chart:'区间条 + 渠道点标',st:'ok',
+  viz:()=>rangeBar([
+    {label:'Galaxy S25',p25:899990,med:929990,p75:999990,note:'4 渠道'},
+    {label:'Redmi Note 14',p25:189990,med:209990,p75:249990,note:'3 渠道'},
+    {label:'iPhone 16',p25:989000,med:1049990,p75:1149990,note:'3 渠道'},
+    {label:'Moto Edge 60',p25:349990,med:369990,p75:389990,note:'2 渠道'}],
+    {xlab:'智利 · CLP · 同款在不同渠道'}),
+  vt:'379 个「产品×国家」出现在 ≥2 渠道（2渠道286 / 3渠道79 / 4渠道11 / 5渠道3）',
+  why:`<p class="q">回答：这个品牌的渠道价格管控有多松？</p>
+  <p>条越长 = 同一台机器在不同店差价越大 = 厂商管不住渠道。
+  这是谈判桌上的硬材料。</p>
+  <p class="no"><b>诚实提醒：</b>只有 379 个格子够画，全库 2,616 个格子只在单渠道出现过。
+  所以这张图必须标"仅覆盖 N 款"，不能让人以为是全景。</p>`},
+
+ {n:8,t:'价格趋势线：修掉现有那张图的三个毛病',chart:'折线 · 真实日期轴 + 断点显式 + 促销底纹',st:'thin',
+  viz:()=>lineChart([
+    {c:C().cool,pts:[329990,329990,null,299990,299990]},
+    {c:C().hw,pts:[349990,349990,349990,349990,319990]}],
+    {xs:['08-10','08-11','08-12','08-13','08-14'],ylab:'CLP',band:[2,3]}),
+  vt:'现有 trendSvg 的 x 轴按点序号等距排，断采看不出来',
+  why:`<p class="q">现有这张图有三个会误导人的地方：</p>
+  <p>① <b>x 轴按点序号等距</b>，不按日期 —— 中间断采两天，图上和连续采样长得一模一样。<br>
+  ② <b>断点直接连线</b>，把"那天没跑采集"画成了"价格没变"。<br>
+  ③ 没有促销区间标注，一个促销深坑看起来像真降价。</p>
+  <p class="no">修法：日期轴按真实间隔，缺口<b>不连线</b>并在轴上画空心方块，
+  促销期用底纹铺出来。上面这张就是修好的样子。</p>`},
+
+ {n:9,t:'我方 vs 同档位友商',chart:'成对条 pairBar · Acme红 vs 友商蓝',st:'blocked',
+  viz:()=>blocked('my_pricing 表 0 行 —— 一条Acme价格都没录',
+    '需要：按 products.py 的 Excel 模板导入Acme六国定价'),
+  vt:'我们有 114 个自家产品、129 个 SKU，但定价表是空的',
+  why:`<p class="q">这是当前<b>最大的单点缺口</b>。</p>
+  <p>销售团队 最想知道的就是"我们比友商贵多少、在哪个档位"。
+  competitor_match 已经有 213 对匹配关系，价差字段也算好了 ——
+  但因为 <code>my_pricing</code> 是空的，这些全是悬空的。</p>
+  <p class="no"><b>补法：</b>项目里已经有 Excel 导入模板（<code>products.write_template</code>），
+  填Acme六国的建议零售价即可。填完这一项，价格看板能立刻多出三张图。</p>`},
+
+ {n:10,t:'六国同款价位并排（USD）',chart:'哑铃图 / 点图 · 统一 USD 轴',st:'blocked',
+  viz:()=>blocked('sale_price_usd 17,583 行全 NULL，fx_rate 表 0 行',
+    '需要：接一个汇率源，并决定用哪天的汇率口径'),
+  vt:'CLP/COP 与 BRL/PEN 差 3~4 个数量级，本币无法同轴',
+  why:`<p class="q">回答：同一款机器，哪个国家最贵？有没有套利空间？</p>
+  <p class="no"><b>要提醒一句：</b>本项目其他地方（price_audit / strategy）刻意立了
+  "跨币种不混算"的规矩，那是<b>对的</b> —— 用于异常检测和价格带划分时混算会把整个高汇率国家判成异常。
+  但"同款六国比价"这个问题本身就要求统一口径。<br>
+  所以建议是：<b>加 USD 列但严格限定用途</b>，只给这一类跨国对比用，
+  绝不回流到异常检测里。加汇率时要记一天一条快照，不能用"当前汇率"回算历史。</p>`}
+],
+voc:[
+ {n:1,t:'口碑维度：改成排行发散条，别做雷达图',chart:'发散条 · 相对该品类平均好评率',st:'ok',
+  viz:()=>diverge([{label:'屏幕',v:8.6},{label:'性能',v:7.6},{label:'做工质量',v:2.7},
+    {label:'系统软件',v:2.1},{label:'相机',v:0.8},{label:'电池续航',v:0.1},
+    {label:'连接稳定',v:-12.4},{label:'键盘触控',v:-38.2}],
+    {fmt:v=>(v>0?'+':'')+v.toFixed(1)+'pp',upIsBad:false}),
+  vt:'真实数据：产品维度好评率相对 87.8% 基线的偏离',
+  why:`<p class="q">回答：友商这款强在哪、弱在哪？</p>
+  <p><b>特意不推荐雷达图。</b>维度数会随筛选变化（耳机没有相机、手表没有键盘），
+  而雷达图的面积在维度数不同时<b>完全不可比</b> —— 6 边形和 12 边形的面积
+  含义不同，读者却会本能地比面积。发散条没有这个问题。</p>
+  <p class="no"><b>基线要选对：</b>零售评论天然正面（我们库里 positive 705 : negative 40），
+  所以不能看绝对好评率，要看<b>相对同品类基线的偏离</b>，否则每个维度都是"90% 好评"。</p>`},
+
+ {n:2,t:'产品维度 vs 体验维度：必须分屏',chart:'两组发散条 · 同轴不同组',st:'ok',
+  viz:()=>diverge([{label:'物流',v:-1.4},{label:'价格',v:-3.9},{label:'包装配件',v:-4.5},
+    {label:'正品与否',v:-2.1},{label:'售后',v:-45.7,c:C().up}],
+    {fmt:v=>(v>0?'+':'')+v.toFixed(1)+'pp',upIsBad:false}),
+  vt:'真实数据：体验维度，售后好评率 42.1% vs 其余 83~86%',
+  why:`<p class="q">这是维度表上线后跑出的<b>第一个真结论</b>。</p>
+  <p>售后好评率 42%，其余所有维度 84~100%。但关键在于：
+  <b>售后是渠道的事，不是产品的事</b>。混进产品雷达图会得出
+  "这款手机弱在售后"—— 那不是手机的问题，是这家零售商的问题。</p>
+  <p class="no">销售团队 要区分的正是这两件事：<b>产品要改</b> vs <b>渠道要谈</b>。
+  所以两组维度必须分开显示，绝不能画进同一张图。</p>`},
+
+ {n:3,t:'品牌 × 维度好评率热力图',chart:'热力图 · 发散色阶，中性=该维度大盘均值',st:'ok',
+  viz:()=>heat(['电池','相机','屏幕','性能','做工'],['Samsung','Apple','Sony','ASUS'],[
+    {x:'电池',y:'Samsung',v:91},{x:'相机',y:'Samsung',v:96},{x:'屏幕',y:'Samsung',v:100},{x:'性能',y:'Samsung',v:98},{x:'做工',y:'Samsung',v:96},
+    {x:'电池',y:'Apple',v:84},{x:'相机',y:'Apple',v:92},{x:'屏幕',y:'Apple',v:97},{x:'性能',y:'Apple',v:95},{x:'做工',y:'Apple',v:93},
+    {x:'电池',y:'Sony',v:78},{x:'相机',y:'Sony',v:0},{x:'屏幕',y:'Sony',v:0},{x:'性能',y:'Sony',v:88},{x:'做工',y:'Sony',v:82},
+    {x:'电池',y:'ASUS',v:73},{x:'相机',y:'ASUS',v:0},{x:'屏幕',y:'ASUS',v:86},{x:'性能',y:'ASUS',v:91},{x:'做工',y:'ASUS',v:79}],
+    {center:88,fmt:v=>v||'—'}),
+  vt:'Samsung 496 / Apple 242 / Sony 98 / ASUS 96 条维度标注，够撑一张热力图',
+  why:`<p class="q">回答：谁在哪个维度上是真强项？</p>
+  <p>把"品牌×维度"摊平成一张网格，强弱格子自己跳出来。
+  空格（—）要<b>显式画成空</b>，不能填 0 —— "没人提过相机"和"相机被骂到 0 分"
+  是完全不同的两件事。</p>
+  <p class="no"><b>为什么不是表格：</b>4×5 已经 20 个数，扩到 10 品牌 × 19 维度就是 190 个数，
+  表格彻底失效。</p>`},
+
+ {n:4,t:'情感来源分层：别让回填数据冒充逐维度判断',chart:'100% 堆叠条 · 按 sentiment_from 分层',st:'ok',
+  viz:()=>stack100([
+    {label:'性能',a:112,b:172},{label:'做工质量',a:78,b:112},
+    {label:'电池续航',a:41,b:25},{label:'系统软件',a:38,b:41},
+    {label:'相机',a:29,b:41},{label:'屏幕',a:22,b:33}],
+    [{k:'a',name:'逐维度判定',c:C().cool},{k:'b',name:'整条继承',c:C().ink3}]),
+  vt:'真实数据：review_aspect 1,506 条 = 逐维度 437 + 继承 1,069',
+  why:`<p class="q">这是一条<b>诚实性</b>建议，不是好看度建议。</p>
+  <p>老数据的维度情感是从<b>整条评论继承</b>的：一条"相机很棒但电池垃圾"的评论，
+  整条判 negative 会让<b>相机也记一票差评</b>。而雷达图恰恰是用来区分维度好坏的，
+  这么记等于把要看的信号抹平。</p>
+  <p class="no">所以每张口碑图都要能看到"这里面有多少是继承的"。
+  现在后端已经返回 <code>inherited_pct</code> 和提示语，前端也显示了 —— 但应该做成
+  <b>可视化的分层</b>而不是一行小字。</p>`},
+
+ {n:5,t:'评论覆盖漏斗：我们到底读了多少商品的评论',chart:'漏斗 / 阶梯条',st:'ok',
+  viz:()=>diverge([{label:'有价格的商品页',v:100,c:C().cool},{label:'抓过评论画像',v:11.9,c:C().cool},
+    {label:'真抓到评论',v:8.9,c:C().cool},{label:'已翻译分析',v:5.2,c:C().amber},
+    {label:'有维度标注',v:4.1,c:C().amber}],{fmt:v=>v+'%',upIsBad:false}),
+  vt:'真实数据：8,463 个商品页 → 434 个评论画像 → 1,576 条评论 → 739 条已分析',
+  why:`<p class="q">回答：这个看板上的结论，是基于多大的样本？</p>
+  <p>覆盖率本身就是最该先看的一张图。现在 VOC 页顶部是四张数字卡
+  （已抓/已翻译/正面/负面），但没有<b>分母</b> —— 读者不知道 1,576 条
+  是覆盖了全部商品还是 4%。</p>
+  <p class="no">这张图还能直接当运维告警用：某一层掉得异常，就是那一步的采集出问题了。</p>`},
+
+ {n:6,t:'维度提及量的国家差异',chart:'成对条 · 国家对比',st:'thin',
+  viz:()=>stack100([
+    {label:'CL 智利',a:284,b:63},{label:'CO 哥伦比亚',a:97,b:41}],
+    [{k:'a',name:'产品维度',c:C().cool},{k:'b',name:'体验维度',c:C().amber}]),
+  vt:'目前只有 CL 1,434 条 + CO 293 条，其余三国为 0',
+  why:`<p class="q">回答：不同市场的消费者在意的东西一样吗？</p>
+  <p>哥伦比亚的评论里体验维度（物流/售后）占比明显高于智利 ——
+  如果这个差异在更多样本下站得住，那是<b>渠道策略</b>层面的情报。</p>
+  <p class="no"><b>诚实标注：</b>现在只有两国有评论，这张图必须写明
+  "仅 CL/CO"。评论国家覆盖的 bug 已修（选目标原本按本币金额排序，
+  等于按币值排名，墨西哥候选最多却一个都进不去），下一轮会均分到五国。</p>`},
+
+ {n:7,t:'上市后口碑衰减曲线',chart:'折线 · x=首销后第 N 天',st:'blocked',
+  viz:()=>blocked('评论星级 1,576 条里只有 2 条有值',
+    '需要：下一轮采集（已改成从 DOM 属性读星级）'),
+  vt:'后端已经算好了 buckets[{day_from,day_to,avg_rating,n,thin}]，前端只差一个渲染函数',
+  why:`<p class="q">回答：新品上市后 30/60/90 天，口碑是稳住还是崩了？</p>
+  <p>数据结构<b>已经完全备好</b>，甚至连"样本不足的桶要画成虚点"都实现了。
+  卡在星级：零售站把星级渲染成图标不是文字，<code>node.text</code> 拿不到。
+  已改成从 aria-label / itemprop / data-rating 读，等下一轮采集。</p>
+  <p class="no"><b>另一道闸也已就位：</b>上市日期是 "YYYY-01-01" 的一律不用 ——
+  那是补规格时的占位值，拿它算"上市第 2300 天"毫无意义。</p>`},
+
+ {n:8,t:'评论量 × 平均星级 四象限',chart:'四象限散点 · 大小=评论量',st:'blocked',
+  viz:()=>quad([{x:0,y:0,r:0}],{xlab:'评论量',ylab:'平均星级',
+    qtext:['高分冷门','★爆款','低分冷门','高量低分 = 风险']}),
+  vt:'同样卡在星级；review_profile.avg_rating 只有 75 行有值',
+  why:`<p class="q">回答：哪些是真爆款、哪些是"卖得多但口碑在崩"？</p>
+  <p>右下象限（高评论量 + 低星级）是<b>最该盯的进攻窗口</b> ——
+  友商卖得动但用户在骂，这是我们抢份额的缝。</p>
+  <p class="no">象限是散点图的核心价值："爆款"和"高量低分"在图上是两个固定位置，
+  看一眼就知道落在哪个格子，两列数字做不到这件事。</p>`},
+
+ {n:9,t:'差评聚集预警：同机型同维度突然扎堆',chart:'维度×时间 热力图 + 阈值高亮',st:'blocked',
+  viz:()=>blocked('整条 negative 只有 42 条，维度层 negative 约 105 票',
+    '需要：评论量再上一个量级（覆盖五国 + 星级到位后）'),
+  vt:'按国家/品牌再切就变成 1-3 票一格，画出来是噪声不是信号',
+  why:`<p class="q">回答：友商某批次出问题了吗？（这是进攻窗口）</p>
+  <p>思路是对的：同机型同国家的差评<b>突然聚集且集中在同一维度</b>（比如"发热"），
+  就触发预警。但现在整库负面评论只有 42 条，按维度一摊每格 1~13 票。</p>
+  <p class="no"><b>这条现在不该做。</b>在 42 条上画预警热力图，
+  会让一两条随机差评看起来像质量事故 —— 比没有这张图更糟。</p>`},
+
+ {n:10,t:'「提到Acme」对比语料流',chart:'语料卡片流 + 维度标签',st:'blocked',
+  viz:()=>blocked('voc_insight.vs_acme 目前只有 1 条命中',
+    '需要：语料扩大（评论覆盖五国 + MercadoLibre token）'),
+  vt:'字段和逻辑都已实现，纯粹是语料不够',
+  why:`<p class="q">回答：消费者在什么场景下拿友商和我们比？比的是什么？</p>
+  <p>这是<b>潜在价值最高的一张表</b> —— 一手的竞品对比语料，
+  直接说"比Acme好/差在哪"。功能已实现，卡在语料量。</p>
+  <p class="no">扩语料的最大杠杆是 MercadoLibre 官方 API（六国最大电商），
+  需要你去申请一个免费 token。网页通道已因 robots.txt 具名禁止而停用。</p>`}
+],
+rise:[
+ {n:1,t:'涨价预警：起止价与幅度同时可读',chart:'哑铃图 · 点大小=评论量（销量代理）',st:'thin',
+  viz:()=>dumbbell([
+    {label:'Smart Band 9',from:21990,to:26990,size:5},
+    {label:'Redmi Watch 5',from:32990,to:39990,size:4},
+    {label:'Galaxy A07',from:129990,to:149990,size:6.5},
+    {label:'Redmi A5',from:159990,to:179990,size:5},
+    {label:'Redmi Note 15',from:109990,to:119990,size:4},
+    {label:'POCO F6',from:299990,to:314990,size:5.5}],
+    {xlab:'智利 · CLP · Falabella',fmt:v=>(v/1000).toFixed(0)+'k'}),
+  vt:'真实数据：16 条可信涨价中的智利部分',
+  why:`<p class="q">回答：谁涨了？从多少涨到多少？</p>
+  <p>哑铃图让<b>起止价位与幅度同时可读</b>。并排两根柱子只能读出两个高度，
+  差值要心算 —— 这是 nubimetrics 在代码注释里专门论证过的一条。</p>
+  <p class="no"><b>点大小本该是销量</b>，但我们拿不到销量。
+  可用的最佳代理是<b>评论量</b>（项目里已经在用它当销量代理指标）。
+  没有代理量的产品要画成灰色空心，不能默认成小点。</p>`},
+
+ {n:2,t:'★ 可信度分层：这个看板的第一件事是自证清白',chart:'幅度分档直方图 + 品类隔离',st:'ok',
+  viz:()=>hist([{label:'2-5%',n:9},{label:'5-10%',n:7},{label:'10-15%',n:2},
+    {label:'15-25%',n:4},{label:'25-50%',n:0},{label:'>50%',n:5}],
+    {xlab:'涨幅分档 · 条数',hi:b=>['25-50%','>50%'].includes(b.label)}),
+  vt:'真实数据：27 条涨价的幅度分布',
+  why:`<p class="q">这一条<b>必须排在所有涨价图之前</b>。</p>
+  <p>我们 27 条"涨价"里，5 条 &gt;50% 的<b>全是秘鲁耳机</b>：
+  Smokin Buds 89→299 PEN（+236%）、Clip TA140 66→159 PEN。
+  这几乎肯定是闪促结束回弹，不是涨价。降价平均只有 7.4%，
+  而"涨价"平均 36.7% —— 这个不对称本身就是污染的证据。</p>
+  <p class="no"><b>两条隔离规则：</b><br>
+  ① <b>按品类分开看</b>。音频配件单价低，几十块的波动就是百分之几十，
+  会把真正该看的整机涨价全部挤出榜单。<br>
+  ② <b>&gt;25% 默认折叠</b>并标注"疑似促销回弹/变体串档，需人工核实"。</p>`},
+
+ {n:3,t:'促销收缩：涨价的先行指标',chart:'哑铃图 · x=在促商品占比，upIsBad 反转',st:'ok',
+  viz:()=>dumbbell([
+    {label:'Xiaomi CL',from:82,to:71},{label:'Samsung CL',from:79,to:74},
+    {label:'Motorola CL',from:88,to:81},{label:'Honor CO',from:74,to:76},
+    {label:'Apple MX',from:41,to:38}],
+    {xlab:'在促商品占比 %',fmt:v=>v+'%'}),
+  vt:'discount_pct 非空 13,620 行，五国 × 4-5 天全有格子',
+  why:`<p class="q">回答：谁在<b>准备</b>涨价？</p>
+  <p>这是整个涨价看板里我最想让你先做的一条。
+  厂商通常<b>先减促、再提价</b>，促销收缩往往比成交价上涨早 2~4 周出现。
+  等看到涨价再反应就晚了。</p>
+  <p class="no"><b>颜色语义要反转</b>（<code>upIsBad=false</code>）：
+  这张图上"在促占比下降"才是要警惕的信号，所以向左的线标红。
+  这种反转必须显式声明，不能靠调用方记住。</p>`},
+
+ {n:4,t:'多国同步上涨：区分厂商调价与单店行为',chart:'国家×机型 热力网格',st:'thin',
+  viz:()=>heat(['MX','BR','CL','CO','PE'],['Galaxy A07','Redmi A5','Watch S5','Edge 70'],[
+    {x:'CL',y:'Galaxy A07',v:15.4},{x:'CO',y:'Galaxy A07',v:10.0},
+    {x:'CL',y:'Redmi A5',v:12.5},{x:'PE',y:'Redmi A5',v:0},
+    {x:'PE',y:'Watch S5',v:3.2},{x:'CL',y:'Edge 70',v:3.7},
+    {x:'MX',y:'Edge 70',v:0},{x:'BR',y:'Edge 70',v:0}],
+    {center:0,fmt:v=>v?('+'+v+'%'):'·'}),
+  vt:'真实数据：涨价按国家 CL 16 / PE 6 / CO 2 / MX 2 / BR 1',
+  why:`<p class="q">回答：这是厂商全球调价，还是某家店自己的动作？</p>
+  <p>同一款机型在<b>两个以上国家同时涨</b>，是强信号 —— 基本可以判定为厂商调价。
+  单国单店涨价通常只是渠道行为，情报价值低得多。</p>
+  <p class="no"><b>诚实标注：</b>现在 MX/CO/BR 各只有 1~2 条涨价，
+  这张网格会非常稀疏。要显示"·"表示未观测到，<b>不能显示 0%</b> ——
+  "没涨"和"没观测到"是两件事。</p>`},
+
+ {n:5,t:'官方渠道 vs 第三方涨价分离',chart:'成对条 · 颜色编码口径不编码涨跌',st:'thin',
+  viz:()=>stack100([{label:'CL 智利',a:16,b:0},{label:'PE 秘鲁',a:5,b:1},
+    {label:'CO 哥伦比亚',a:2,b:0},{label:'MX 墨西哥',a:1,b:1},{label:'BR 巴西',a:1,b:0}],
+    [{k:'a',name:'自营/官方',c:C().cool},{k:'b',name:'第三方卖家',c:C().amber}]),
+  vt:'真实数据：236 条 is_official=1 / 6 条第三方',
+  why:`<p class="q">回答：这是定价动作，还是某个卖家在甩货？</p>
+  <p>官方/自营涨价 = 厂商或零售商的<b>定价决策</b>，有战略含义；
+  第三方卖家涨价可能只是库存紧张。混在一起会把噪声当信号。</p>
+  <p class="no"><b>颜色不能用涨跌色。</b>这张图回答的是"两个口径各占多少"，
+  不是"涨还是跌"，所以颜色必须编码口径。
+  nubimetrics 在代码里专门写了这条禁令，还记录了一次写反的教训。</p>`},
+
+ {n:6,t:'存储版本溢价：芯片紧缺的最灵敏指标',chart:'斜率图 · 上期价差 → 本期价差',st:'thin',
+  viz:()=>slope([
+    {label:'Redmi Note 14',from:40000,to:60000,rlab:'+20k'},
+    {label:'Galaxy A56',from:70000,to:80000,rlab:'+10k'},
+    {label:'Moto G85',from:50000,to:45000,rlab:'−5k'}],
+    {lLab:'上期价差',rLab:'本期价差'}),
+  vt:'ram_gb/rom_gb 已在解析，但填充率需先核',
+  why:`<p class="q">回答：内存要涨价了吗？</p>
+  <p>同机型高存储版对低存储版的<b>价差扩大</b>，是芯片紧缺最灵敏的指标 ——
+  比整机涨价<b>更早出现</b>，因为厂商先动高配（那里成本压力最大）。</p>
+  <p class="no"><b>斜率图专门表达方向</b>：向上的线 = 高配涨得更快 = 存储紧缺信号。
+  一眼看见谁在扩、谁在收，不用比两列数字。</p>`},
+
+ {n:7,t:'涨价事件时间轴',chart:'时间轴 · 按国家泳道',st:'thin',
+  viz:()=>lineChart([{c:C().up,pts:[null,3,9,4,null]},{c:C().down,pts:[null,18,29,25,null]}],
+    {xs:['08-10','08-11','08-12','08-13','08-14'],ylab:'条数 · 红=涨 绿=降'}),
+  vt:'真实数据：price_move 只有 08-11/12/13 三天（65/91/86 条）',
+  why:`<p class="q">回答：调价潮是不是正在发生？</p>
+  <p>涨降条数的日度曲线能看出"集中调价窗口"。
+  拉美的大促节奏（Buen Fin、Black Friday、Hot Sale）前后会有明显的调价潮。</p>
+  <p class="no"><b>两个当前限制要标出来：</b>只有 3 天数据，
+  而且 <code>price_move</code> 停在 08-13 但 <code>price_obs</code> 已到 08-14 ——
+  看板上"今日变动"会是空的，那是<b>还没跑</b>，不是没变动。这两种状态必须能分辨。</p>`},
+
+ {n:8,t:'价格台阶检测：真调价 vs 促销波动',chart:'哑铃图 · 空心点=窗口内波动大',st:'blocked',
+  viz:()=>blocked('只有 5 天数据，台阶检测需要前后各 4 期窗口',
+    '需要：连续采集 2~3 周'),
+  vt:'nubimetrics 的判据：|变化|>4% 且两个窗口内部 CV 都 <4%',
+  why:`<p class="q">这是区分"真涨价"和"促销结束"的<b>最硬判据</b>。</p>
+  <p>逻辑很漂亮：要求<b>变化前后各自都站住了</b>。
+  促销的一周深坑会把窗口内部的波动系数（CV）撑爆，自动出局。
+  我们那 5 条秘鲁耳机异常，用这个判据会被直接筛掉。</p>
+  <p class="no"><b>还有一个可以直接抄的手法：</b>把"稳定度"编码进<b>点的填充</b>——
+  实心 = 前后窗口都稳，空心 = 波动偏大存疑。
+  置信度不该单开一列数字，应该长在图形属性上。</p>`},
+
+ {n:9,t:'厂商 ASP 异动的结构效应拆解',chart:'成对条 · 原始变化 vs 剔除结构后',st:'blocked',
+  viz:()=>blocked('拆解需要销量权重，我们没有销量数据',
+    '需要：确定一个销量代理（评论量增量是目前唯一候选）'),
+  vt:'nubimetrics 用 Laspeyres 固定篮子做这件事',
+  why:`<p class="q">"某品牌均价涨了 5%"—— 是全线涨价，还是卖贵机型的多了？</p>
+  <p>这两件事的含义<b>完全相反</b>：前者是涨价，后者是产品结构上移，
+  单价可能一分没涨。不拆开就会把结构变化误读成涨价。</p>
+  <p class="no">我们的知识库里已经有这条教训（"构成效应 vs 水平效应"）。
+  没有销量就没法做加权，硬做会得到一个看起来很专业但没有意义的数字。
+  <b>宁可不做这张图，也不要做一个错的。</b></p>`},
+
+ {n:10,t:'机制建议：涨价看板必须忽略侧栏的日期筛选',chart:'交互机制，非图表',st:'ok',
+  viz:()=>blocked('这一条是交互设计，不是图表',
+    'nubimetrics 的实测教训：10 张表同时空白，看起来像软件坏了'),
+  vt:'pricing.ts 的 stripDates()：主动剥掉侧栏日期筛选',
+  why:`<p class="q">一个会让整个看板"看起来坏掉"的坑。</p>
+  <p>涨价看板按定义就是"本期 vs 上期"，<b>对比窗口本身就是它的时间维度</b>。
+  如果它同时还受侧栏日期筛选约束，用户筛"最近 7 天"时上一期被整段筛掉，
+  所有环比全空。</p>
+  <p class="no">nubimetrics 实测过这个后果：10 张表同时空白，用户以为软件坏了。
+  修法是这个看板<b>主动剥掉</b>侧栏日期筛选，其余筛选（国家/品类/品牌）照常生效，
+  并在页面上写清"本看板的时间维度由对比窗口控制"。</p>`}
+]};
+
+function render(){
+  for(const [key,list] of Object.entries(ITEMS)){
+    document.getElementById(key).innerHTML = list.map(it=>`
+      <article class="item">
+        <div class="item-head">
+          <span class="idx">${it.n.toString().padStart(2,'0')}</span>
+          <div class="t"><h3>${esc(it.t)}</h3>
+            <div class="chartname"><b>${esc(it.chart)}</b></div></div>
+          <span class="badge ${it.st}">${it.st==='ok'?'现在能画':it.st==='thin'?'数据将就':'卡数据'}</span>
+        </div>
+        <div class="body">
+          <div class="viz">${it.viz()}<div class="vt">${esc(it.vt)}</div></div>
+          <div class="why">${it.why}</div>
+        </div>
+      </article>`).join('');
+  }
+}
+render();
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',render);
+</script>

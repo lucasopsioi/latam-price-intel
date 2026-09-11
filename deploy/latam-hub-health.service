@@ -1,0 +1,11 @@
+[Unit]
+Description=拉美竞品情报中枢 健康探针（假死检测）
+After=latam-hub.service
+# 主服务没在跑就不用探（比如你手动 stop 了在做维护），
+# 否则探针会把你刚停下的服务又拉起来。
+Requisite=latam-hub.service
+
+[Service]
+Type=oneshot
+# 以 root 跑：需要 systemctl restart 的权限
+ExecStart=/usr/local/bin/latam-hub-health

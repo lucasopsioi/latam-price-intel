@@ -1,0 +1,73 @@
+scrape:
+  engine: selenium
+  fallback_engine: playwright
+  headless: true
+  min_delay: 4
+  max_delay: 11.0
+  request_timeout: 60
+  device_pool: mixed
+  rotate_device_every: 8
+  persist_cookies: true
+  block_cooldown: 120
+  max_products_per_query: 60
+  detail_budget_seconds: 420
+  parallel_workers: 5
+  challenge_wait_seconds: 25
+  max_pages_per_channel: 3
+  proxy: ''
+  concurrency: 1
+  daily_all_categories: 1
+voc:
+  enabled: true
+  max_reviews_per_product: 600
+  max_seconds_per_product: 300
+  max_products_per_run: 300
+  stage_budget_seconds: 21600
+  min_reviews_to_analyze: 5
+  hot_product_review_threshold: 100
+schedule:
+  daily_time: 07:30
+  enabled: true
+agents:
+  provider: minimax
+  minimax_base_url: https://api.minimaxi.com/v1
+  minimax_model: MiniMax-Text-01
+  temperature: 0.2
+  max_tokens: "YOUR_TOKEN_HERE"
+  timeout: 180
+  enable_intel: true
+  enable_price_audit: true
+  enable_cleaner: true
+  enable_spec_filler: true
+  report_provider: deepseek
+matching:
+  spec_min: 0.55
+  price_band_pct: 0.3
+  total_min: 0.6
+  top_n_per_country: 10
+telegram:
+  enabled: false
+  daily_time: 08:30
+  include_sections:
+  - new_products
+  - price_moves
+  - promos
+archive:
+  enabled: true
+  keep_snapshots: 14
+fx_usd:
+  as_of: 2026-08
+  MXN: 18.6
+  BRL: 5.45
+  CLP: 945
+  COP: 4050
+  PEN: 3.55
+  ARS: 1350
+phone_sync:
+  enabled: 1
+  device: Astra 70 Air
+  folder: 工作
+  interval_min: 3
+weekly_report:
+  auto: 1
+  time: 05:00
